@@ -75,7 +75,7 @@
     <p class="lead">1枚の元写真を、カメラロールの写真やYouTubeサムネイルでモザイクアートに変換します。画像処理そのものはこのiPhone / iPad内で行います。</p>
     <div class="notice info"><span class="dot info"></span><span><b>写真はアップロードしません。</b> カメラロールの写真はブラウザの一時メモリだけで扱い、ページを閉じれば破棄されます。</span></div>
     <div class="notice ok"><span class="dot ok"></span><span><b>大量写真モード対応。</b> 2000枚前後でも、一度に全画像を展開せず、順番に軽量サムネイルへ変換してから処理します。</span></div>
-    <div class="notice warn"><span class="dot warn"></span><span><b>YouTubeサムネ取得はAPIキーが必要です。</b> GitHub Pagesで使う場合は、Google CloudでYouTube Data API v3を有効化し、HTTPリファラ制限付きのAPIキーを作るのが安全です。</span></div>
+    <div class="notice warn"><span class="dot warn"></span><span><b>YouTubeサムネ取得はAPIキーが必要です。</b> GitHub Pagesで使う場合は、Google CloudでYouTube Data API v3を有効化し、HTTPリファラ制限付きのAPIキーを作るのがおすすめです。</span></div>
   </header>
 
   <section class="card">
@@ -93,7 +93,7 @@
     <div class="settings">
       <div class="setting">
         <div class="labelrow"><label for="plannedCount">読み込む予定の素材数</label><span id="plannedCountValue" class="value">2000枚</span></div>
-        <input id="plannedCount" type="range" min="100" max="3000" step="100" value="2000" />
+        <input id="plannedCount" type="range" min="100" max="5000" step="100" value="2000" />
       </div>
     </div>
 
@@ -111,27 +111,34 @@
         <input id="ytApiKey" class="field" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false" />
       </div>
       <div class="setting">
-        <label for="ytLimit">YouTubeから取得する上限</label>
-        <div class="labelrow"><span class="hint">プレイリスト取得時の上限</span><span id="ytLimitValue" class="value">200件</span></div>
+        <label for="ytLimit">直接プレイリスト取得の上限</label>
+        <div class="labelrow"><span class="hint">プレイリストURLを使うときだけ有効</span><span id="ytLimitValue" class="value">200件</span></div>
         <input id="ytLimit" type="range" min="50" max="500" step="50" value="200" />
       </div>
     </div>
     <div class="grid2">
       <div class="setting">
+        <label for="ytChannel">チャンネルURL / ID / @ハンドル（任意）</label>
+        <input id="ytChannel" class="field" type="text" placeholder="https://www.youtube.com/@... / UC... / @handle / username" />
+      </div>
+      <div class="setting">
         <label for="ytPlaylist">プレイリストURL / ID（任意）</label>
         <input id="ytPlaylist" class="field" type="text" placeholder="https://www.youtube.com/playlist?list=... または PL..." />
       </div>
-      <div class="setting">
+    </div>
+    <div class="grid2">
+      <div class="setting" style="grid-column:1/-1">
         <label for="ytVideos">動画URL / ID（任意）</label>
         <textarea id="ytVideos" class="field" placeholder="1行に1つ。動画URLでも動画IDでもOK。"></textarea>
       </div>
     </div>
-    <div class="buttons two" style="margin-top:10px">
+    <div class="buttons" style="margin-top:10px">
       <button id="ytFetchBtn" class="secondary">YouTubeサムネを取得して追加</button>
+      <button id="ytFetchChannelBtn" class="secondary">チャンネル内の全サムネを取得して追加</button>
       <button id="ytClearBtn" class="secondary">YouTube入力欄をクリア</button>
     </div>
     <div id="ytStatus" class="status">未取得</div>
-    <div class="hint">取得したサムネイルURLは一時的に素材リストへ加えられます。APIキーは保存しません。</div>
+    <div class="hint">チャンネル全取得では、チャンネルの uploads プレイリストをページ送りしながら最後まで取得します。大きなチャンネルでは時間がかかります。</div>
   </section>
 
   <section class="card">
@@ -184,8 +191,8 @@
   const $ = (s) => document.querySelector(s);
   const targetInput = $('#targetInput'), tilesInput = $('#tilesInput');
   const makeBtn = $('#makeBtn'), clearBtn = $('#clearBtn'), shareBtn = $('#shareBtn'), downloadBtn = $('#downloadBtn');
-  const ytFetchBtn = $('#ytFetchBtn'), ytClearBtn = $('#ytClearBtn');
-  const ytApiKey = $('#ytApiKey'), ytPlaylist = $('#ytPlaylist'), ytVideos = $('#ytVideos'), ytStatus = $('#ytStatus');
+  const ytFetchBtn = $('#ytFetchBtn'), ytFetchChannelBtn = $('#ytFetchChannelBtn'), ytClearBtn = $('#ytClearBtn');
+  const ytApiKey = $('#ytApiKey'), ytChannel = $('#ytChannel'), ytPlaylist = $('#ytPlaylist'), ytVideos = $('#ytVideos'), ytStatus = $('#ytStatus');
   const canvas = $('#output'), ctx = canvas.getContext('2d', { alpha: false });
   const targetPreview = $('#targetPreview');
   const targetStatus = $('#targetStatus'), tilesStatus = $('#tilesStatus'), tilesSummary = $('#tilesSummary');
@@ -279,9 +286,7 @@
       const d = cc.getImageData(0, 0, thumbSize, thumbSize).data;
       let r=0,g=0,b=0,n=0;
       const stride = Math.max(4, Math.floor((thumbSize * thumbSize) / 384));
-      for(let i=0;i<d.length;i+=stride*4){
-        r += d[i]; g += d[i+1]; b += d[i+2]; n++;
-      }
+      for(let i=0;i<d.length;i+=stride*4){ r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
       const src = c.toDataURL('image/jpeg', 0.72);
       return { src, r:r/n, g:g/n, b:b/n, name:source.label || source.key, thumbSize };
     } finally {
@@ -296,9 +301,7 @@
     return true;
   }
 
-  function countByKind(kind){
-    return sourceItems.filter(item => item.kindSource === kind).length;
-  }
+  function countByKind(kind){ return sourceItems.filter(item => item.kindSource === kind).length; }
 
   function updateSourceStatus(){
     const planned = Number(controls.plannedCount.value);
@@ -307,11 +310,8 @@
     const total = sourceItems.length;
     const percent = total ? Math.min(100, Math.round((total / Math.max(1, planned)) * 100)) : 0;
     tilesStatus.textContent = `${total}件を追加済み / 予定 ${planned}件`;
-    if(total === 0){
-      tilesSummary.textContent = 'まだ素材は追加されていません。';
-    } else {
-      tilesSummary.textContent = `合計 ${total}件（カメラロール ${localCount}件 / YouTube ${ytCount}件） / 進捗 ${percent}%`;
-    }
+    if(total === 0) tilesSummary.textContent = 'まだ素材は追加されていません。';
+    else tilesSummary.textContent = `合計 ${total}件（カメラロール ${localCount}件 / YouTube ${ytCount}件） / 進捗 ${percent}%`;
   }
 
   function chooseThumb(thumbnails){
@@ -340,12 +340,27 @@
         if(u.hostname.includes('youtu.be')) id = u.pathname.replace(/^\//,'').slice(0,11);
         else if(u.searchParams.get('v')) id = u.searchParams.get('v');
         else if(u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2] || '';
-      }catch(_){
-        if(/^[A-Za-z0-9_-]{11}$/.test(line)) id = line;
-      }
+      }catch(_){ if(/^[A-Za-z0-9_-]{11}$/.test(line)) id = line; }
       if(/^[A-Za-z0-9_-]{11}$/.test(id)) ids.add(id);
     }
     return Array.from(ids);
+  }
+
+  function parseChannelInput(text){
+    const raw = (text || '').trim();
+    if(!raw) return null;
+    try{
+      const u = new URL(raw);
+      const path = u.pathname.replace(/\/+$/,'');
+      if(path.startsWith('/channel/')) return { type:'id', value:path.split('/')[2] || '' };
+      if(path.startsWith('/user/')) return { type:'username', value:path.split('/')[2] || '' };
+      if(path.startsWith('/@')) return { type:'handle', value:path.slice(2) };
+    }catch(_){
+      if(raw.startsWith('@')) return { type:'handle', value:raw.slice(1) };
+      if(/^UC[A-Za-z0-9_-]+$/.test(raw)) return { type:'id', value:raw };
+      return { type:'username', value:raw };
+    }
+    return null;
   }
 
   async function ytApi(url){
@@ -400,6 +415,61 @@
     return results;
   }
 
+  async function resolveUploadsPlaylist(apiKey, channelSpec){
+    const url = new URL('https://www.googleapis.com/youtube/v3/channels');
+    url.searchParams.set('part', 'contentDetails,snippet');
+    url.searchParams.set('key', apiKey);
+    if(channelSpec.type === 'id') url.searchParams.set('id', channelSpec.value);
+    else if(channelSpec.type === 'handle') url.searchParams.set('forHandle', channelSpec.value);
+    else url.searchParams.set('forUsername', channelSpec.value);
+    const data = await ytApi(url.toString());
+    const item = data.items && data.items[0];
+    const uploads = item?.contentDetails?.relatedPlaylists?.uploads;
+    if(!uploads) throw new Error('チャンネルの uploads プレイリストを取得できませんでした。チャンネルURL/ID/@ハンドルを確認してください。');
+    return { uploads, title: item?.snippet?.title || channelSpec.value };
+  }
+
+  async function fetchAllChannelThumbs(apiKey, channelSpec){
+    const { uploads, title } = await resolveUploadsPlaylist(apiKey, channelSpec);
+    const results = [];
+    let pageToken = '';
+    let page = 0;
+    while(true){
+      page++;
+      ytStatus.textContent = `チャンネル「${title}」のサムネを取得中… ${results.length}件`;
+      const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+      url.searchParams.set('part', 'snippet');
+      url.searchParams.set('playlistId', uploads);
+      url.searchParams.set('maxResults', '50');
+      url.searchParams.set('key', apiKey);
+      if(pageToken) url.searchParams.set('pageToken', pageToken);
+      const data = await ytApi(url.toString());
+      for(const item of data.items || []){
+        const videoId = item?.snippet?.resourceId?.videoId;
+        const thumb = chooseThumb(item?.snippet?.thumbnails);
+        if(videoId && thumb) results.push({ videoId, thumb, title: item?.snippet?.title || videoId });
+      }
+      if(!data.nextPageToken) break;
+      pageToken = data.nextPageToken;
+      await pause();
+    }
+    return results;
+  }
+
+  function mergeYouTubeResults(list){
+    let added = 0;
+    const seen = new Set();
+    for(const item of list){
+      if(seen.has(item.videoId)) continue;
+      seen.add(item.videoId);
+      const ok = addSourceItem({ key:`yt__${item.videoId}`, kind:'url', kindSource:'youtube', url:item.thumb, label:item.title });
+      if(ok) added++;
+    }
+    tileData = [];
+    updateSourceStatus();
+    return added;
+  }
+
   targetInput.addEventListener('change', async () => {
     const file = targetInput.files && targetInput.files[0];
     if(!file || busy) return;
@@ -423,9 +493,7 @@
     tileData = [];
     tilesInput.value = '';
     updateSourceStatus();
-    if(sourceItems.length){
-      tilesSummary.textContent += ` / 直近追加 ${added}件${skipped ? ` / 重複スキップ ${skipped}件` : ''}`;
-    }
+    if(sourceItems.length) tilesSummary.textContent += ` / 直近追加 ${added}件${skipped ? ` / 重複スキップ ${skipped}件` : ''}`;
     validate();
   });
 
@@ -438,7 +506,6 @@
     if(!playlistId && videoIds.length === 0){ ytStatus.textContent = 'プレイリストURL/IDか、動画URL/IDを入力してください。'; return; }
     if(busy) return;
     busy = true; validate();
-    let added = 0;
     try{
       ytStatus.textContent = 'YouTube情報を取得中…';
       let list = [];
@@ -450,29 +517,35 @@
         ytStatus.textContent = '動画IDからサムネイルを取得中…';
         list = list.concat(await fetchVideoThumbs(apiKey, videoIds));
       }
-      const seen = new Set();
-      list = list.filter(item => {
-        if(seen.has(item.videoId)) return false;
-        seen.add(item.videoId);
-        return true;
-      });
-      for(const item of list){
-        const ok = addSourceItem({ key:`yt__${item.videoId}`, kind:'url', kindSource:'youtube', url:item.thumb, label:item.title });
-        if(ok) added++;
-      }
-      tileData = [];
-      updateSourceStatus();
+      const added = mergeYouTubeResults(list);
       ytStatus.textContent = `YouTubeサムネを ${added}件 追加しました。`;
     } catch(err){
       console.error(err);
       ytStatus.textContent = `取得失敗: ${err?.message || err}`;
-    } finally {
-      busy = false; validate();
-    }
+    } finally { busy = false; validate(); }
+  });
+
+  ytFetchChannelBtn.addEventListener('click', async () => {
+    const apiKey = ytApiKey.value.trim();
+    const channelSpec = parseChannelInput(ytChannel.value);
+    if(!apiKey){ ytStatus.textContent = 'APIキーを入力してください。'; return; }
+    if(!channelSpec){ ytStatus.textContent = 'チャンネルURL / ID / @ハンドル / username を入力してください。'; return; }
+    if(busy) return;
+    busy = true; validate();
+    try{
+      ytStatus.textContent = 'チャンネル情報を取得中…';
+      const list = await fetchAllChannelThumbs(apiKey, channelSpec);
+      const added = mergeYouTubeResults(list);
+      ytStatus.textContent = `チャンネル内のサムネイルを ${added}件 追加しました。`;
+    } catch(err){
+      console.error(err);
+      ytStatus.textContent = `取得失敗: ${err?.message || err}`;
+    } finally { busy = false; validate(); }
   });
 
   ytClearBtn.addEventListener('click', () => {
     ytApiKey.value = '';
+    ytChannel.value = '';
     ytPlaylist.value = '';
     ytVideos.value = '';
     ytStatus.textContent = 'YouTube入力欄をクリアしました。';
@@ -481,6 +554,7 @@
   function validate(){
     makeBtn.disabled = busy || !targetState.img || sourceItems.length < 2;
     ytFetchBtn.disabled = busy;
+    ytFetchChannelBtn.disabled = busy;
   }
 
   async function prepareTiles(){
@@ -489,11 +563,8 @@
     const thumbSize = getAdaptiveThumbSize(sourceItems.length);
     for(let i=0;i<sourceItems.length;i++){
       setProgress((i / Math.max(1, sourceItems.length)) * 35, `素材を軽量化中… ${i+1}/${sourceItems.length}（${thumbSize}×${thumbSize}px）`);
-      try {
-        tileData.push(await makeTileRecord(sourceItems[i], thumbSize));
-      } catch(err){
-        console.warn('Skipped source', sourceItems[i]?.label, err);
-      }
+      try { tileData.push(await makeTileRecord(sourceItems[i], thumbSize)); }
+      catch(err){ console.warn('Skipped source', sourceItems[i]?.label, err); }
       if(i % 3 === 0) await pause();
     }
     if(tileData.length < 2) throw new Error('読み込める素材が2件未満でした。');
@@ -519,8 +590,7 @@
   }
 
   async function buildMosaic(){
-    busy = true;
-    validate();
+    busy = true; validate();
     resultButtons.style.display = 'none';
     canvasWrap.classList.remove('ready');
     resultMeta.classList.remove('ready');
@@ -532,7 +602,6 @@
       const aspect = targetState.img.naturalHeight / targetState.img.naturalWidth;
       const rows = Math.max(1, Math.round(cols * aspect));
       const outH = Math.max(1, Math.round(outW * aspect));
-
       const sample = document.createElement('canvas');
       sample.width = cols; sample.height = rows;
       const sc = sample.getContext('2d', { willReadFrequently: true });
@@ -545,7 +614,6 @@
       const usage = new Array(tileData.length).fill(0);
       const balance = Number(controls.balance.value) / 100;
       const avgUse = (cells.length / tileData.length);
-
       for(let i=0;i<cells.length;i++){
         const x = i % cols, y = Math.floor(i / cols);
         const banned = new Set();
@@ -569,10 +637,7 @@
         }
         assignment[i] = best;
         usage[best]++;
-        if(i % 180 === 0){
-          setProgress(35 + (i / cells.length) * 35, `色合わせ中… ${i+1}/${cells.length}`);
-          await pause();
-        }
+        if(i % 180 === 0){ setProgress(35 + (i / cells.length) * 35, `色合わせ中… ${i+1}/${cells.length}`); await pause(); }
       }
 
       const usedSet = new Set(assignment);
@@ -585,17 +650,10 @@
       for(let i=0;i<assignment.length;i++){
         const x = i % cols, y = Math.floor(i / cols);
         drawCover(ctx, thumbs.get(assignment[i]), x * cw, y * ch, cw + 0.8, ch + 0.8);
-        if(i % 220 === 0){
-          setProgress(82 + (i / assignment.length) * 17, `描画中… ${i+1}/${assignment.length}`);
-          await pause();
-        }
+        if(i % 220 === 0){ setProgress(82 + (i / assignment.length) * 17, `描画中… ${i+1}/${assignment.length}`); await pause(); }
       }
-
       const blend = Number(controls.blend.value) / 100;
-      if(blend > 0){
-        ctx.save(); ctx.globalAlpha = blend; ctx.drawImage(targetState.img, 0, 0, outW, outH); ctx.restore();
-      }
-
+      if(blend > 0){ ctx.save(); ctx.globalAlpha = blend; ctx.drawImage(targetState.img, 0, 0, outW, outH); ctx.restore(); }
       setProgress(100, '完成しました');
       canvasWrap.classList.add('ready');
       resultButtons.style.display = 'grid';
@@ -607,9 +665,7 @@
     } catch(err){
       console.error(err);
       setProgress(0, err?.message || '作成に失敗しました。');
-    } finally {
-      busy = false; validate();
-    }
+    } finally { busy = false; validate(); }
   }
 
   makeBtn.addEventListener('click', buildMosaic);
@@ -617,8 +673,7 @@
   function canvasBlob(){ return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1)); }
   downloadBtn.addEventListener('click', async () => {
     const blob = await canvasBlob(); if(!blob) return;
-    const a = document.createElement('a');
-    const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); const u = URL.createObjectURL(blob);
     a.href = u; a.download = `mosaic-${new Date().toISOString().slice(0,10)}.png`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(u), 2000);
@@ -628,16 +683,12 @@
     const file = new File([blob], `mosaic-${new Date().toISOString().slice(0,10)}.png`, { type:'image/png' });
     if(navigator.canShare && navigator.canShare({ files:[file] }) && navigator.share){
       try { await navigator.share({ files:[file], title:'Mosaic' }); } catch(e){ if(e?.name !== 'AbortError') console.warn(e); }
-    } else {
-      downloadBtn.click();
-    }
+    } else downloadBtn.click();
   });
 
   clearBtn.addEventListener('click', () => {
     revokeTarget();
-    sourceItems = [];
-    tileData = [];
-    sourceKeySet.clear();
+    sourceItems = []; tileData = []; sourceKeySet.clear();
     targetInput.value = ''; tilesInput.value = '';
     targetPreview.innerHTML = '';
     targetStatus.textContent = '未選択';
@@ -649,9 +700,7 @@
     validate();
   });
 
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn));
-  }
+  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn)); }
 })();
 </script>
 </body>
