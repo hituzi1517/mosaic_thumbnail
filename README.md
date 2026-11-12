@@ -1,1 +1,34 @@
-# mosaic_thumbnail
+# Mosaic PWA
+
+iPhone / iPad / PC のブラウザで動く、オンデバイスの写真モザイクアプリです。
+
+## 特徴
+- 元写真 1 枚 + 素材写真 複数枚からモザイクアートを生成
+- 写真はアップロードしない（端末内処理のみ）
+- GitHub Pages でそのまま公開可能
+- Safari の「ホーム画面に追加」で PWA として利用可能
+- 大量写真向けに、素材写真を 1 枚ずつ軽量サムネイル化してから処理
+- 素材写真は 100 枚ずつなど、分割して何度でも追加可能
+- YouTube Data API v3 を使って、プレイリストや動画URLからサムネイルを取得可能
+
+## 公開方法
+1. このフォルダの中身を GitHub リポジトリ直下へ配置
+2. GitHub Pages を `main` / `root` で有効化
+3. `https://<username>.github.io/<repo>/` を Safari で開く
+4. 共有ボタンから「ホーム画面に追加」
+
+## YouTube API の準備
+1. Google Cloud でプロジェクトを作成
+2. YouTube Data API v3 を有効化
+3. API キーを作成
+4. できれば HTTP リファラ制限をかけ、GitHub Pages のURLだけを許可する
+
+## YouTubeでできること
+- プレイリストURL / ID から複数サムネイルを取得
+- 動画URL / 動画ID を1行ずつ入力してサムネイル取得
+- 取得したサムネイルを通常の素材と同じようにモザイクに利用
+
+## 注意
+- 大量枚数では解析に時間がかかります。
+- iPhone では 1 回で大量選択せず、100 枚前後ずつ追加するのが安定です。
+- YouTube API キーは入力欄でのみ使用し、localStorage / IndexedDB には保存しません。
