@@ -1,707 +1,87 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Mosaic" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-  <title>Mosaic — 写真でモザイクアート</title>
-  <style>
-    :root{
-      color-scheme:dark;
-      --bg:#07111f; --panel:#0f1b2d; --panel2:#13233a; --text:#f8fafc;
-      --muted:#a7b3c7; --line:#223653; --accent:#7dd3fc; --accent2:#38bdf8;
-      --ok:#86efac; --danger:#fda4af; --warning:#fde68a; --shadow:0 18px 55px rgba(0,0,0,.28);
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:radial-gradient(circle at 30% -10%,#133057 0,#07111f 42%,#050b13 100%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
-    body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(24px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
-    .wrap{max-width:860px;margin:0 auto;padding:20px 16px 44px}
-    header{padding:12px 4px 20px}
-    .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
-    h1{font-size:clamp(30px,7vw,48px);line-height:1.03;margin:8px 0 10px;letter-spacing:-.04em}
-    .lead{color:var(--muted);line-height:1.65;margin:0;max-width:700px}
-    .notice{margin-top:14px;display:flex;gap:8px;align-items:flex-start;color:#d7e8f8;font-size:13px;line-height:1.45;border-radius:14px;padding:11px 12px}
-    .notice.info{background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.18)}
-    .notice.ok{background:rgba(134,239,172,.08);border:1px solid rgba(134,239,172,.18)}
-    .notice.warn{background:rgba(253,230,138,.08);border:1px solid rgba(253,230,138,.18)}
-    .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
-    .dot.info{background:var(--accent);box-shadow:0 0 0 4px rgba(125,211,252,.08)}
-    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(134,239,172,.08)}
-    .dot.warn{background:var(--warning);box-shadow:0 0 0 4px rgba(253,230,138,.08)}
-    .card{background:linear-gradient(180deg,rgba(19,35,58,.93),rgba(12,25,43,.96));border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin:14px 0}
-    .card h2{font-size:17px;margin:0 0 14px;letter-spacing:-.02em}
-    .card h3{font-size:15px;margin:8px 0 10px;letter-spacing:-.01em}
-    .stack{display:grid;gap:12px}
-    .pick{display:block;border:1px dashed #315277;background:#0a1728;border-radius:18px;padding:16px;cursor:pointer;transition:.18s}
-    .pick:active{transform:scale(.99);background:#0c1e34}
-    .pick strong{display:block;font-size:15px;margin-bottom:5px}.pick small{color:var(--muted);line-height:1.45}
-    input[type=file]{display:none}
-    .status{margin-top:8px;font-size:13px;color:var(--muted);min-height:18px}
-    .hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
-    .counter{margin-top:8px;padding:10px 12px;border-radius:14px;background:#091423;border:1px solid #28425f;color:#d7e8f8;font-size:13px;line-height:1.55}
-    .thumbrow{display:flex;gap:9px;overflow:auto;padding:2px 0 4px;scrollbar-width:none}.thumbrow::-webkit-scrollbar{display:none}
-    .thumbrow img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #28425f;flex:none;background:#091423}
-    .settings{display:grid;grid-template-columns:1fr;gap:16px}
-    .setting{display:grid;gap:7px}.labelrow{display:flex;justify-content:space-between;gap:14px;align-items:center}.labelrow label{font-size:14px;font-weight:650}.value{color:var(--accent);font-variant-numeric:tabular-nums;font-size:13px}
-    input[type=range]{width:100%;accent-color:var(--accent2)}
-    .switchrow{display:flex;justify-content:space-between;gap:16px;align-items:center;border-top:1px solid rgba(255,255,255,.06);padding-top:14px}
-    .switchtext{font-size:14px}.switchtext small{display:block;color:var(--muted);margin-top:3px;font-size:12px}
-    .switch{position:relative;width:50px;height:30px;flex:none}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#31445e;border-radius:999px;transition:.2s}.slider:before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.25)}.switch input:checked + .slider{background:#0ea5e9}.switch input:checked + .slider:before{transform:translateX(20px)}
-    button{appearance:none;border:0;border-radius:16px;padding:14px 17px;font-size:15px;font-weight:750;cursor:pointer;color:#05111f;background:linear-gradient(180deg,#8be0ff,#55c7f4);box-shadow:0 10px 25px rgba(56,189,248,.18)}
-    button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.secondary{color:#e8f3fb;background:#17283f;border:1px solid #294363;box-shadow:none}.danger{color:#ffdfe4;background:#351722;border:1px solid #5a2635;box-shadow:none}
-    .buttons{display:grid;grid-template-columns:1fr;gap:10px}.buttons.two{grid-template-columns:1fr 1fr}
-    .progress{height:8px;background:#081321;border-radius:999px;overflow:hidden;border:1px solid #1e334e;margin:13px 0 5px}.bar{height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#60a5fa);transition:width .18s}
-    #progressText{font-size:12px;color:var(--muted);min-height:18px;line-height:1.45}
-    .canvasWrap{display:none;margin-top:14px;background:#03070d;border:1px solid #24384f;border-radius:18px;padding:10px;overflow:hidden}.canvasWrap.ready{display:block}
-    canvas{display:block;width:100%;height:auto;border-radius:10px;background:#000}
-    .resultMeta{display:none;color:var(--muted);font-size:12px;line-height:1.5;margin:10px 2px 0}.resultMeta.ready{display:block}
-    .field{width:100%;background:#091423;border:1px solid #28425f;color:#f8fafc;border-radius:14px;padding:12px 14px;font:inherit}
-    textarea.field{min-height:110px;resize:vertical}
-    .grid2{display:grid;grid-template-columns:1fr;gap:12px}
-    footer{color:#71829a;font-size:12px;line-height:1.6;padding:14px 4px 0}
-    @media(min-width:700px){.settings,.grid2{grid-template-columns:1fr 1fr}.buttons{grid-template-columns:1fr 1fr 1fr}}
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="YT Mosaic">
+  <meta name="description" content="YouTubeチャンネル・再生リストの全公開サムネイルでモザイクアートを作る、iPhone対応PWA">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Thumbnail Mosaic | YouTubeでモザイクアート</title>
 </head>
 <body>
-<main class="wrap">
-  <header>
-    <div class="eyebrow">ON-DEVICE PHOTO MOSAIC</div>
-    <h1>写真だけで、写真を描く。</h1>
-    <p class="lead">1枚の元写真を、カメラロールの写真やYouTubeサムネイルでモザイクアートに変換します。画像処理そのものはこのiPhone / iPad内で行います。</p>
-    <div class="notice info"><span class="dot info"></span><span><b>写真はアップロードしません。</b> カメラロールの写真はブラウザの一時メモリだけで扱い、ページを閉じれば破棄されます。</span></div>
-    <div class="notice ok"><span class="dot ok"></span><span><b>大量写真モード対応。</b> 2000枚前後でも、一度に全画像を展開せず、順番に軽量サムネイルへ変換してから処理します。</span></div>
-    <div class="notice warn"><span class="dot warn"></span><span><b>YouTubeサムネ取得はAPIキーが必要です。</b> GitHub Pagesで使う場合は、Google CloudでYouTube Data API v3を有効化し、HTTPリファラ制限付きのAPIキーを作るのがおすすめです。</span></div>
-  </header>
+  <main class="app">
+    <header class="hero">
+      <div class="eyebrow"><span class="orbit"></span> THUMBNAIL MOSAIC <span class="version">v1.0</span></div>
+      <h1>動画の記憶で、<br><em>一枚のアートを。</em></h1>
+      <p>チャンネルの公開サムネイルを最初から最後まで取得。<br>何千枚もの画像でモザイクアートを作れる、YouTube専用のWebアプリ。</p>
+      <div class="hero-meta"><span><i class="point"></i> 取得枚数の独自上限なし</span><span><i class="point"></i> 保存は作ったときだけ</span></div>
+    </header>
 
-  <section class="card">
-    <h2>1. 元写真を選ぶ</h2>
-    <div class="stack">
-      <label class="pick" for="targetInput"><strong>元にする写真を1枚選択</strong><small>完成形の輪郭・色になる写真です。</small></label>
-      <input id="targetInput" type="file" accept="image/*" />
-      <div id="targetStatus" class="status">未選択</div>
-      <div id="targetPreview" class="thumbrow"></div>
-    </div>
-  </section>
+    <section class="panel" id="targetSection">
+      <div class="section-header"><span class="step">01</span><div><h2>元にする画像</h2><p>モザイクアートで再現したい写真を選んでください。</p></div></div>
+      <label class="upload-target" for="targetInput" id="targetZone">
+        <input type="file" id="targetInput" accept="image/*">
+        <div class="upload-placeholder" id="targetPlaceholder"><span class="upload-icon">＋</span><strong>画像を選択</strong><span>iPhoneの写真アプリから選べます</span></div>
+        <img id="targetPreview" class="target-preview" alt="元画像プレビュー" hidden>
+      </label>
+      <div class="mini-status" id="targetStatus" aria-live="polite">まだ選ばれていません</div>
+    </section>
 
-  <section class="card">
-    <h2>2. モザイク素材を集める</h2>
-    <div class="settings">
-      <div class="setting">
-        <div class="labelrow"><label for="plannedCount">読み込む予定の素材数</label><span id="plannedCountValue" class="value">2000枚</span></div>
-        <input id="plannedCount" type="range" min="100" max="5000" step="100" value="2000" />
+    <section class="panel" id="sourceSection">
+      <div class="section-header"><span class="step">02</span><div><h2>YouTubeから集める</h2><p>チャンネル・再生リストのすべての公開動画を収集します。</p></div></div>
+      <div class="form-grid">
+        <div class="field"><label for="apiKey">YouTube Data APIキー <span>必須</span></label><input type="password" id="apiKey" autocomplete="off" placeholder="AIza..." spellcheck="false"><small>端末の一時メモリでのみ使用。保存はしません。</small></div>
+        <div class="field"><label for="sourceType">取得元</label><select id="sourceType"><option value="channel">YouTubeチャンネル</option><option value="playlist">再生リスト</option></select><small>チャンネルは通常の公開アップロード一覧を対象にします。</small></div>
       </div>
-    </div>
-
-    <h3>カメラロールから追加</h3>
-    <label class="pick" for="tilesInput"><strong>素材写真を追加（何回でもOK）</strong><small>100枚ずつなど、分割して追加してください。選ぶたびに合計へ加算します。</small></label>
-    <input id="tilesInput" type="file" accept="image/*" multiple />
-    <div id="tilesStatus" class="status">0件を追加済み / 予定 2000件</div>
-    <div id="tilesSummary" class="counter">まだ素材は追加されていません。</div>
-    <div class="hint">iPhoneでは写真ピッカー自体が大量選択で重くなりやすいため、100枚ずつくらいの分割追加が最も安定します。</div>
-
-    <h3 style="margin-top:18px">YouTubeサムネイルを追加</h3>
-    <div class="grid2">
-      <div class="setting">
-        <label for="ytApiKey">YouTube Data API キー</label>
-        <input id="ytApiKey" class="field" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+      <div class="field"><label for="sourceUrl" id="sourceLabel">チャンネルURL / @ハンドル / UCで始まるID</label><input type="text" id="sourceUrl" autocomplete="off" placeholder="https://www.youtube.com/@example" spellcheck="false"></div>
+      <div class="button-pair"><button id="fetchBtn" class="primary" type="button">全サムネイルを取得 <span aria-hidden="true">→</span></button><button id="stopFetchBtn" class="ghost" type="button" disabled>取得を停止</button></div>
+      <div class="progress-panel" id="metadataPanel" hidden>
+        <div class="progress-head"><span>動画一覧を取得中</span><strong id="metadataPercent">0%</strong></div>
+        <div class="track"><div class="fill" id="metadataBar"></div></div>
+        <div class="progress-details"><span id="metadataCount">0件取得</span><span id="metadataPages">0ページ</span></div>
+        <p class="progress-note" id="metadataStatus" aria-live="polite"></p>
       </div>
-      <div class="setting">
-        <label for="ytLimit">直接プレイリスト取得の上限</label>
-        <div class="labelrow"><span class="hint">プレイリストURLを使うときだけ有効</span><span id="ytLimitValue" class="value">200件</span></div>
-        <input id="ytLimit" type="range" min="50" max="500" step="50" value="200" />
+      <div class="summary" id="sourceSummary"><div class="summary-item"><strong id="totalCount">0</strong><span>取得した動画</span></div><div class="summary-item"><strong id="uniqueCount">0</strong><span>重複を除いた素材</span></div><div class="summary-item"><strong id="pageCount">0</strong><span>取得ページ</span></div></div>
+      <p class="hint">「全件」はサイト側で上限を設けないという意味です。YouTube APIの日次割り当て、アクセス権、iPhoneのメモリ・ネットワーク状況によって途中で止まることがあります。公開されていない動画は取得できません。</p>
+    </section>
+
+    <section class="panel" id="optionsSection">
+      <div class="section-header"><span class="step">03</span><div><h2>仕上がりを調整</h2><p>iPhoneなら、まず「バランス」設定がおすすめです。</p></div></div>
+      <div class="option-grid">
+        <div class="range-box"><div class="range-title"><label for="columns">タイルの細かさ</label><output id="columnsValue">64列</output></div><input type="range" id="columns" min="20" max="140" value="64" step="2"><small>細かくするほど処理が増えます</small></div>
+        <div class="range-box"><div class="range-title"><label for="outSize">出力画像の幅</label><output id="outSizeValue">1600px</output></div><input type="range" id="outSize" min="800" max="2800" value="1600" step="200"><small>大きい出力はiPhoneのメモリを多く使います</small></div>
+        <div class="range-box"><div class="range-title"><label for="diversity">同じサムネの偏りを抑える</label><output id="diversityValue">45%</output></div><input type="range" id="diversity" min="0" max="100" value="45" step="5"><small>色の正確さとのバランスを調整</small></div>
+        <div class="range-box"><div class="range-title"><label for="blend">元画像を重ねる</label><output id="blendValue">8%</output></div><input type="range" id="blend" min="0" max="35" value="8" step="1"><small>0%ならサムネイルだけの仕上がり</small></div>
       </div>
-    </div>
-    <div class="grid2">
-      <div class="setting">
-        <label for="ytChannel">チャンネルURL / ID / @ハンドル（任意）</label>
-        <input id="ytChannel" class="field" type="text" placeholder="https://www.youtube.com/@... / UC... / @handle / username" />
+      <label class="checkbox-line"><input id="avoidNeighbors" type="checkbox" checked><span>隣り合う同じサムネをなるべく避ける</span></label>
+    </section>
+
+    <section class="panel" id="buildSection">
+      <div class="section-header"><span class="step">04</span><div><h2>モザイクアートを生成</h2><p>画像を1枚ずつ読み込み、解析し、最後に描画します。</p></div></div>
+      <div class="field"><label for="proxyUrl">画像読み込み用 Worker URL <span class="optional">CORS対策</span></label><input id="proxyUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-worker.example.workers.dev"><small>サムネイルをCanvasで読み込めない場合に必要。ZIP内の <code>worker/thumb-proxy.js</code> を使えます。設定は保存されません。</small></div>
+      <div class="button-pair"><button id="buildBtn" class="primary" type="button" disabled>モザイクを作成 <span aria-hidden="true">✦</span></button><button id="stopBuildBtn" class="ghost" type="button" disabled>解析を停止</button></div>
+      <div class="progress-panel" id="buildPanel" hidden>
+        <div class="progress-head"><span id="buildTitle">素材の解析中</span><strong id="buildPercent">0%</strong></div>
+        <div class="track"><div class="fill" id="buildBar"></div></div>
+        <div class="progress-details"><span id="buildCount">0 / 0件</span><span id="buildErrors">失敗 0件</span></div>
+        <p class="progress-note" id="buildStatus" aria-live="polite"></p>
       </div>
-      <div class="setting">
-        <label for="ytPlaylist">プレイリストURL / ID（任意）</label>
-        <input id="ytPlaylist" class="field" type="text" placeholder="https://www.youtube.com/playlist?list=... または PL..." />
+      <div id="errorBox" class="alert" role="alert" hidden></div>
+      <div id="resultArea" hidden>
+        <div class="art-frame"><canvas id="resultCanvas" aria-label="完成したモザイクアート"></canvas></div>
+        <div class="mini-status" id="resultInfo"></div>
+        <div class="button-pair"><button id="shareBtn" class="primary" type="button">iPhoneで共有・保存</button><button id="saveBtn" class="ghost" type="button">PNGを保存</button></div>
       </div>
-    </div>
-    <div class="grid2">
-      <div class="setting" style="grid-column:1/-1">
-        <label for="ytVideos">動画URL / ID（任意）</label>
-        <textarea id="ytVideos" class="field" placeholder="1行に1つ。動画URLでも動画IDでもOK。"></textarea>
-      </div>
-    </div>
-    <div class="buttons" style="margin-top:10px">
-      <button id="ytFetchBtn" class="secondary">YouTubeサムネを取得して追加</button>
-      <button id="ytFetchChannelBtn" class="secondary">チャンネル内の全サムネを取得して追加</button>
-      <button id="ytClearBtn" class="secondary">YouTube入力欄をクリア</button>
-    </div>
-    <div id="ytStatus" class="status">未取得</div>
-    <div class="hint">チャンネル全取得では、チャンネルの uploads プレイリストをページ送りしながら最後まで取得します。大きなチャンネルでは時間がかかります。</div>
-  </section>
+      <button id="clearBtn" class="reset" type="button">写真・サムネ情報を破棄して最初から</button>
+    </section>
 
-  <section class="card">
-    <h2>3. 仕上がりを調整</h2>
-    <div class="settings">
-      <div class="setting">
-        <div class="labelrow"><label for="cols">細かさ</label><span id="colsValue" class="value">36列</span></div>
-        <input id="cols" type="range" min="12" max="90" step="2" value="36" />
-      </div>
-      <div class="setting">
-        <div class="labelrow"><label for="outWidth">出力サイズ</label><span id="outWidthValue" class="value">1600 px</span></div>
-        <input id="outWidth" type="range" min="800" max="2400" step="200" value="1600" />
-      </div>
-      <div class="setting">
-        <div class="labelrow"><label for="balance">写真の偏り抑制</label><span id="balanceValue" class="value">55%</span></div>
-        <input id="balance" type="range" min="0" max="100" step="5" value="55" />
-      </div>
-      <div class="setting">
-        <div class="labelrow"><label for="blend">元写真を薄く重ねる</label><span id="blendValue" class="value">8%</span></div>
-        <input id="blend" type="range" min="0" max="35" step="1" value="8" />
-      </div>
-    </div>
-    <div class="switchrow">
-      <div class="switchtext">隣り合う同じ素材を避ける<small>候補が少ない場合は自動的に再利用します。</small></div>
-      <label class="switch"><input id="avoidAdjacent" type="checkbox" checked><span class="slider"></span></label>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>4. 作成</h2>
-    <button id="makeBtn" disabled>モザイクアートを作成</button>
-    <div class="progress"><div id="bar" class="bar"></div></div>
-    <div id="progressText"></div>
-    <div id="canvasWrap" class="canvasWrap"><canvas id="output"></canvas></div>
-    <div id="resultMeta" class="resultMeta"></div>
-    <div id="resultButtons" class="buttons two" style="margin-top:12px;display:none">
-      <button id="shareBtn">共有 / 写真に保存</button>
-      <button id="downloadBtn" class="secondary">PNGをダウンロード</button>
-    </div>
-    <div class="buttons" style="margin-top:10px">
-      <button id="clearBtn" class="danger">読み込んだ素材をすべて破棄</button>
-    </div>
-  </section>
-
-  <footer>このアプリは外部ライブラリ・解析サービス・画像APIを使いません。例外として、YouTubeサムネイルの取得時だけ、YouTube Data APIへAPIリクエストを送ります。PWA本体のHTML/CSS/JavaScriptだけがオフライン用にキャッシュされ、選んだ写真やAPIキーはキャッシュしません。</footer>
-</main>
-<script>
-(() => {
-  'use strict';
-  const $ = (s) => document.querySelector(s);
-  const targetInput = $('#targetInput'), tilesInput = $('#tilesInput');
-  const makeBtn = $('#makeBtn'), clearBtn = $('#clearBtn'), shareBtn = $('#shareBtn'), downloadBtn = $('#downloadBtn');
-  const ytFetchBtn = $('#ytFetchBtn'), ytFetchChannelBtn = $('#ytFetchChannelBtn'), ytClearBtn = $('#ytClearBtn');
-  const ytApiKey = $('#ytApiKey'), ytChannel = $('#ytChannel'), ytPlaylist = $('#ytPlaylist'), ytVideos = $('#ytVideos'), ytStatus = $('#ytStatus');
-  const canvas = $('#output'), ctx = canvas.getContext('2d', { alpha: false });
-  const targetPreview = $('#targetPreview');
-  const targetStatus = $('#targetStatus'), tilesStatus = $('#tilesStatus'), tilesSummary = $('#tilesSummary');
-  const canvasWrap = $('#canvasWrap'), resultButtons = $('#resultButtons'), resultMeta = $('#resultMeta');
-  const bar = $('#bar'), progressText = $('#progressText');
-  const targetState = { file:null, img:null, url:null };
-  let sourceItems = [];
-  let tileData = [];
-  let busy = false;
-  const sourceKeySet = new Set();
-
-  const controls = {
-    plannedCount: $('#plannedCount'), ytLimit: $('#ytLimit'), cols: $('#cols'), outWidth: $('#outWidth'), balance: $('#balance'), blend: $('#blend'), avoidAdjacent: $('#avoidAdjacent')
-  };
-  const labels = {
-    plannedCount: $('#plannedCountValue'), ytLimit: $('#ytLimitValue'), cols: $('#colsValue'), outWidth: $('#outWidthValue'), balance: $('#balanceValue'), blend: $('#blendValue')
-  };
-
-  function syncLabels(){
-    labels.plannedCount.textContent = `${controls.plannedCount.value}枚`;
-    labels.ytLimit.textContent = `${controls.ytLimit.value}件`;
-    labels.cols.textContent = `${controls.cols.value}列`;
-    labels.outWidth.textContent = `${controls.outWidth.value} px`;
-    labels.balance.textContent = `${controls.balance.value}%`;
-    labels.blend.textContent = `${controls.blend.value}%`;
-    updateSourceStatus();
-  }
-  Object.values(controls).forEach(el => el.addEventListener('input', syncLabels));
-  syncLabels();
-
-  function setProgress(p, text=''){
-    bar.style.width = `${Math.max(0, Math.min(100, p))}%`;
-    progressText.textContent = text;
-  }
-  function pause(){ return new Promise(r => setTimeout(r, 0)); }
-
-  function revokeTarget(){
-    if(targetState.url) URL.revokeObjectURL(targetState.url);
-    targetState.file = targetState.img = targetState.url = null;
-  }
-
-  function loadImageFromUrl(url){
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = url;
-    });
-  }
-
-  function fileToImage(file){
-    const url = URL.createObjectURL(file);
-    return loadImageFromUrl(url).then(img => ({img, url}));
-  }
-
-  async function fetchBlobAsImage(url){
-    const res = await fetch(url, { mode: 'cors' });
-    if(!res.ok) throw new Error(`画像取得失敗: ${res.status}`);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const img = await loadImageFromUrl(objectUrl);
-    return { img, url: objectUrl };
-  }
-
-  function drawCover(c, img, x, y, w, h){
-    const sourceW = img.naturalWidth || img.width;
-    const sourceH = img.naturalHeight || img.height;
-    const ir = sourceW / sourceH;
-    const rr = w / h;
-    let sx=0, sy=0, sw=sourceW, sh=sourceH;
-    if(ir > rr){ sw = sourceH * rr; sx = (sourceW - sw)/2; }
-    else { sh = sourceW / rr; sy = (sourceH - sh)/2; }
-    c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-  }
-
-  function getAdaptiveThumbSize(count){
-    if(count >= 1800) return 36;
-    if(count >= 1200) return 40;
-    if(count >= 700) return 48;
-    return 64;
-  }
-
-  async function makeTileRecord(source, thumbSize){
-    const loaded = source.kind === 'file' ? await fileToImage(source.file) : await fetchBlobAsImage(source.url);
-    const { img, url } = loaded;
-    try {
-      const c = document.createElement('canvas');
-      c.width = thumbSize; c.height = thumbSize;
-      const cc = c.getContext('2d', { willReadFrequently: true });
-      drawCover(cc, img, 0, 0, thumbSize, thumbSize);
-      const d = cc.getImageData(0, 0, thumbSize, thumbSize).data;
-      let r=0,g=0,b=0,n=0;
-      const stride = Math.max(4, Math.floor((thumbSize * thumbSize) / 384));
-      for(let i=0;i<d.length;i+=stride*4){ r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
-      const src = c.toDataURL('image/jpeg', 0.72);
-      return { src, r:r/n, g:g/n, b:b/n, name:source.label || source.key, thumbSize };
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  function addSourceItem(source){
-    if(sourceKeySet.has(source.key)) return false;
-    sourceKeySet.add(source.key);
-    sourceItems.push(source);
-    return true;
-  }
-
-  function countByKind(kind){ return sourceItems.filter(item => item.kindSource === kind).length; }
-
-  function updateSourceStatus(){
-    const planned = Number(controls.plannedCount.value);
-    const localCount = countByKind('local');
-    const ytCount = countByKind('youtube');
-    const total = sourceItems.length;
-    const percent = total ? Math.min(100, Math.round((total / Math.max(1, planned)) * 100)) : 0;
-    tilesStatus.textContent = `${total}件を追加済み / 予定 ${planned}件`;
-    if(total === 0) tilesSummary.textContent = 'まだ素材は追加されていません。';
-    else tilesSummary.textContent = `合計 ${total}件（カメラロール ${localCount}件 / YouTube ${ytCount}件） / 進捗 ${percent}%`;
-  }
-
-  function chooseThumb(thumbnails){
-    if(!thumbnails) return null;
-    return thumbnails.maxres?.url || thumbnails.standard?.url || thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url || null;
-  }
-
-  function extractPlaylistId(text){
-    if(!text) return '';
-    const trimmed = text.trim();
-    try{
-      const u = new URL(trimmed);
-      return u.searchParams.get('list') || '';
-    }catch(_){
-      return /^PL|^UU|^LL|^FL|^RD/.test(trimmed) ? trimmed : '';
-    }
-  }
-
-  function extractVideoIds(text){
-    const ids = new Set();
-    const lines = text.split(/\s+/).map(v => v.trim()).filter(Boolean);
-    for(const line of lines){
-      let id = '';
-      try{
-        const u = new URL(line);
-        if(u.hostname.includes('youtu.be')) id = u.pathname.replace(/^\//,'').slice(0,11);
-        else if(u.searchParams.get('v')) id = u.searchParams.get('v');
-        else if(u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2] || '';
-      }catch(_){ if(/^[A-Za-z0-9_-]{11}$/.test(line)) id = line; }
-      if(/^[A-Za-z0-9_-]{11}$/.test(id)) ids.add(id);
-    }
-    return Array.from(ids);
-  }
-
-  function parseChannelInput(text){
-    const raw = (text || '').trim();
-    if(!raw) return null;
-    try{
-      const u = new URL(raw);
-      const path = u.pathname.replace(/\/+$/,'');
-      if(path.startsWith('/channel/')) return { type:'id', value:path.split('/')[2] || '' };
-      if(path.startsWith('/user/')) return { type:'username', value:path.split('/')[2] || '' };
-      if(path.startsWith('/@')) return { type:'handle', value:path.slice(2) };
-    }catch(_){
-      if(raw.startsWith('@')) return { type:'handle', value:raw.slice(1) };
-      if(/^UC[A-Za-z0-9_-]+$/.test(raw)) return { type:'id', value:raw };
-      return { type:'username', value:raw };
-    }
-    return null;
-  }
-
-  async function ytApi(url){
-    const res = await fetch(url, { mode:'cors' });
-    const data = await res.json().catch(() => ({}));
-    if(!res.ok || data.error){
-      const message = data?.error?.message || `APIエラー (${res.status})`;
-      throw new Error(message);
-    }
-    return data;
-  }
-
-  async function fetchPlaylistThumbs(apiKey, playlistId, limit){
-    const results = [];
-    let pageToken = '';
-    while(results.length < limit){
-      const remaining = Math.min(50, limit - results.length);
-      const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-      url.searchParams.set('part', 'snippet');
-      url.searchParams.set('playlistId', playlistId);
-      url.searchParams.set('maxResults', String(remaining));
-      url.searchParams.set('key', apiKey);
-      if(pageToken) url.searchParams.set('pageToken', pageToken);
-      const data = await ytApi(url.toString());
-      for(const item of data.items || []){
-        const videoId = item?.snippet?.resourceId?.videoId;
-        const thumb = chooseThumb(item?.snippet?.thumbnails);
-        if(videoId && thumb) results.push({ videoId, thumb, title: item?.snippet?.title || videoId });
-      }
-      if(!data.nextPageToken) break;
-      pageToken = data.nextPageToken;
-      await pause();
-    }
-    return results;
-  }
-
-  async function fetchVideoThumbs(apiKey, videoIds){
-    const results = [];
-    for(let i=0;i<videoIds.length;i+=50){
-      const chunk = videoIds.slice(i, i+50);
-      const url = new URL('https://www.googleapis.com/youtube/v3/videos');
-      url.searchParams.set('part', 'snippet');
-      url.searchParams.set('id', chunk.join(','));
-      url.searchParams.set('key', apiKey);
-      const data = await ytApi(url.toString());
-      for(const item of data.items || []){
-        const thumb = chooseThumb(item?.snippet?.thumbnails);
-        if(thumb) results.push({ videoId: item.id, thumb, title: item?.snippet?.title || item.id });
-      }
-      await pause();
-    }
-    return results;
-  }
-
-  async function resolveUploadsPlaylist(apiKey, channelSpec){
-    const url = new URL('https://www.googleapis.com/youtube/v3/channels');
-    url.searchParams.set('part', 'contentDetails,snippet');
-    url.searchParams.set('key', apiKey);
-    if(channelSpec.type === 'id') url.searchParams.set('id', channelSpec.value);
-    else if(channelSpec.type === 'handle') url.searchParams.set('forHandle', channelSpec.value);
-    else url.searchParams.set('forUsername', channelSpec.value);
-    const data = await ytApi(url.toString());
-    const item = data.items && data.items[0];
-    const uploads = item?.contentDetails?.relatedPlaylists?.uploads;
-    if(!uploads) throw new Error('チャンネルの uploads プレイリストを取得できませんでした。チャンネルURL/ID/@ハンドルを確認してください。');
-    return { uploads, title: item?.snippet?.title || channelSpec.value };
-  }
-
-  async function fetchAllChannelThumbs(apiKey, channelSpec){
-    const { uploads, title } = await resolveUploadsPlaylist(apiKey, channelSpec);
-    const results = [];
-    let pageToken = '';
-    let page = 0;
-    while(true){
-      page++;
-      ytStatus.textContent = `チャンネル「${title}」のサムネを取得中… ${results.length}件`;
-      const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-      url.searchParams.set('part', 'snippet');
-      url.searchParams.set('playlistId', uploads);
-      url.searchParams.set('maxResults', '50');
-      url.searchParams.set('key', apiKey);
-      if(pageToken) url.searchParams.set('pageToken', pageToken);
-      const data = await ytApi(url.toString());
-      for(const item of data.items || []){
-        const videoId = item?.snippet?.resourceId?.videoId;
-        const thumb = chooseThumb(item?.snippet?.thumbnails);
-        if(videoId && thumb) results.push({ videoId, thumb, title: item?.snippet?.title || videoId });
-      }
-      if(!data.nextPageToken) break;
-      pageToken = data.nextPageToken;
-      await pause();
-    }
-    return results;
-  }
-
-  function mergeYouTubeResults(list){
-    let added = 0;
-    const seen = new Set();
-    for(const item of list){
-      if(seen.has(item.videoId)) continue;
-      seen.add(item.videoId);
-      const ok = addSourceItem({ key:`yt__${item.videoId}`, kind:'url', kindSource:'youtube', url:item.thumb, label:item.title });
-      if(ok) added++;
-    }
-    tileData = [];
-    updateSourceStatus();
-    return added;
-  }
-
-  targetInput.addEventListener('change', async () => {
-    const file = targetInput.files && targetInput.files[0];
-    if(!file || busy) return;
-    revokeTarget();
-    targetPreview.innerHTML = '';
-    const {img, url} = await fileToImage(file);
-    targetState.file = file; targetState.img = img; targetState.url = url;
-    const p = document.createElement('img'); p.src = url; p.alt = '元写真'; targetPreview.appendChild(p);
-    targetStatus.textContent = `${file.name} — ${img.naturalWidth}×${img.naturalHeight}`;
-    validate();
-  });
-
-  tilesInput.addEventListener('change', () => {
-    const incoming = Array.from(tilesInput.files || []);
-    let added = 0, skipped = 0;
-    for(const file of incoming){
-      const key = `file__${file.name}__${file.size}__${file.lastModified}`;
-      const ok = addSourceItem({ key, kind:'file', kindSource:'local', file, label:file.name });
-      ok ? added++ : skipped++;
-    }
-    tileData = [];
-    tilesInput.value = '';
-    updateSourceStatus();
-    if(sourceItems.length) tilesSummary.textContent += ` / 直近追加 ${added}件${skipped ? ` / 重複スキップ ${skipped}件` : ''}`;
-    validate();
-  });
-
-  ytFetchBtn.addEventListener('click', async () => {
-    const apiKey = ytApiKey.value.trim();
-    const playlistId = extractPlaylistId(ytPlaylist.value);
-    const videoIds = extractVideoIds(ytVideos.value);
-    const limit = Number(controls.ytLimit.value);
-    if(!apiKey){ ytStatus.textContent = 'APIキーを入力してください。'; return; }
-    if(!playlistId && videoIds.length === 0){ ytStatus.textContent = 'プレイリストURL/IDか、動画URL/IDを入力してください。'; return; }
-    if(busy) return;
-    busy = true; validate();
-    try{
-      ytStatus.textContent = 'YouTube情報を取得中…';
-      let list = [];
-      if(playlistId){
-        ytStatus.textContent = 'プレイリストからサムネイルを取得中…';
-        list = list.concat(await fetchPlaylistThumbs(apiKey, playlistId, limit));
-      }
-      if(videoIds.length){
-        ytStatus.textContent = '動画IDからサムネイルを取得中…';
-        list = list.concat(await fetchVideoThumbs(apiKey, videoIds));
-      }
-      const added = mergeYouTubeResults(list);
-      ytStatus.textContent = `YouTubeサムネを ${added}件 追加しました。`;
-    } catch(err){
-      console.error(err);
-      ytStatus.textContent = `取得失敗: ${err?.message || err}`;
-    } finally { busy = false; validate(); }
-  });
-
-  ytFetchChannelBtn.addEventListener('click', async () => {
-    const apiKey = ytApiKey.value.trim();
-    const channelSpec = parseChannelInput(ytChannel.value);
-    if(!apiKey){ ytStatus.textContent = 'APIキーを入力してください。'; return; }
-    if(!channelSpec){ ytStatus.textContent = 'チャンネルURL / ID / @ハンドル / username を入力してください。'; return; }
-    if(busy) return;
-    busy = true; validate();
-    try{
-      ytStatus.textContent = 'チャンネル情報を取得中…';
-      const list = await fetchAllChannelThumbs(apiKey, channelSpec);
-      const added = mergeYouTubeResults(list);
-      ytStatus.textContent = `チャンネル内のサムネイルを ${added}件 追加しました。`;
-    } catch(err){
-      console.error(err);
-      ytStatus.textContent = `取得失敗: ${err?.message || err}`;
-    } finally { busy = false; validate(); }
-  });
-
-  ytClearBtn.addEventListener('click', () => {
-    ytApiKey.value = '';
-    ytChannel.value = '';
-    ytPlaylist.value = '';
-    ytVideos.value = '';
-    ytStatus.textContent = 'YouTube入力欄をクリアしました。';
-  });
-
-  function validate(){
-    makeBtn.disabled = busy || !targetState.img || sourceItems.length < 2;
-    ytFetchBtn.disabled = busy;
-    ytFetchChannelBtn.disabled = busy;
-  }
-
-  async function prepareTiles(){
-    if(tileData.length === sourceItems.length && tileData.length) return;
-    tileData = [];
-    const thumbSize = getAdaptiveThumbSize(sourceItems.length);
-    for(let i=0;i<sourceItems.length;i++){
-      setProgress((i / Math.max(1, sourceItems.length)) * 35, `素材を軽量化中… ${i+1}/${sourceItems.length}（${thumbSize}×${thumbSize}px）`);
-      try { tileData.push(await makeTileRecord(sourceItems[i], thumbSize)); }
-      catch(err){ console.warn('Skipped source', sourceItems[i]?.label, err); }
-      if(i % 3 === 0) await pause();
-    }
-    if(tileData.length < 2) throw new Error('読み込める素材が2件未満でした。');
-    updateSourceStatus();
-  }
-
-  function colorDistance(a, b){
-    const dr = a.r - b.r, dg = a.g - b.g, db = a.b - b.b;
-    return dr*dr*0.30 + dg*dg*0.59 + db*db*0.11;
-  }
-
-  async function loadUsedThumbs(usedIndices){
-    const thumbMap = new Map();
-    for(let i=0;i<usedIndices.length;i++){
-      const idx = usedIndices[i];
-      thumbMap.set(idx, await loadImageFromUrl(tileData[idx].src));
-      if(i % 12 === 0){
-        setProgress(72 + (i / Math.max(1, usedIndices.length)) * 10, `使用する素材だけを読み込み中… ${i+1}/${usedIndices.length}`);
-        await pause();
-      }
-    }
-    return thumbMap;
-  }
-
-  async function buildMosaic(){
-    busy = true; validate();
-    resultButtons.style.display = 'none';
-    canvasWrap.classList.remove('ready');
-    resultMeta.classList.remove('ready');
-    setProgress(1, '準備中…');
-    try{
-      await prepareTiles();
-      const cols = Number(controls.cols.value);
-      const outW = Number(controls.outWidth.value);
-      const aspect = targetState.img.naturalHeight / targetState.img.naturalWidth;
-      const rows = Math.max(1, Math.round(cols * aspect));
-      const outH = Math.max(1, Math.round(outW * aspect));
-      const sample = document.createElement('canvas');
-      sample.width = cols; sample.height = rows;
-      const sc = sample.getContext('2d', { willReadFrequently: true });
-      sc.drawImage(targetState.img, 0, 0, cols, rows);
-      const px = sc.getImageData(0, 0, cols, rows).data;
-      const cells = [];
-      for(let i=0;i<cols*rows;i++) cells.push({ r:px[i*4], g:px[i*4+1], b:px[i*4+2] });
-
-      const assignment = new Array(cells.length);
-      const usage = new Array(tileData.length).fill(0);
-      const balance = Number(controls.balance.value) / 100;
-      const avgUse = (cells.length / tileData.length);
-      for(let i=0;i<cells.length;i++){
-        const x = i % cols, y = Math.floor(i / cols);
-        const banned = new Set();
-        if(controls.avoidAdjacent.checked){
-          if(x > 0) banned.add(assignment[i-1]);
-          if(y > 0) banned.add(assignment[i-cols]);
-        }
-        let best = -1, bestScore = Infinity;
-        for(let t=0;t<tileData.length;t++){
-          if(banned.has(t) && tileData.length > 2) continue;
-          const dist = colorDistance(cells[i], tileData[t]);
-          const pressure = balance * 2600 * Math.pow(usage[t] / Math.max(1, avgUse), 1.7);
-          const score = dist + pressure;
-          if(score < bestScore){ bestScore = score; best = t; }
-        }
-        if(best < 0){
-          for(let t=0;t<tileData.length;t++){
-            const score = colorDistance(cells[i], tileData[t]);
-            if(score < bestScore){ bestScore = score; best = t; }
-          }
-        }
-        assignment[i] = best;
-        usage[best]++;
-        if(i % 180 === 0){ setProgress(35 + (i / cells.length) * 35, `色合わせ中… ${i+1}/${cells.length}`); await pause(); }
-      }
-
-      const usedSet = new Set(assignment);
-      const usedIndices = Array.from(usedSet).sort((a,b) => usage[b] - usage[a]);
-      const thumbs = await loadUsedThumbs(usedIndices);
-
-      canvas.width = outW; canvas.height = outH;
-      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, outW, outH);
-      const cw = outW / cols, ch = outH / rows;
-      for(let i=0;i<assignment.length;i++){
-        const x = i % cols, y = Math.floor(i / cols);
-        drawCover(ctx, thumbs.get(assignment[i]), x * cw, y * ch, cw + 0.8, ch + 0.8);
-        if(i % 220 === 0){ setProgress(82 + (i / assignment.length) * 17, `描画中… ${i+1}/${assignment.length}`); await pause(); }
-      }
-      const blend = Number(controls.blend.value) / 100;
-      if(blend > 0){ ctx.save(); ctx.globalAlpha = blend; ctx.drawImage(targetState.img, 0, 0, outW, outH); ctx.restore(); }
-      setProgress(100, '完成しました');
-      canvasWrap.classList.add('ready');
-      resultButtons.style.display = 'grid';
-      const used = usage.filter(v => v > 0).length;
-      const thumbSize = tileData[0]?.thumbSize || 0;
-      resultMeta.textContent = `${cols}×${rows} = ${cols*rows}タイル / 素材 ${tileData.length}件中 ${used}件を使用 / 解析サムネイル ${thumbSize}px / 出力 ${outW}×${outH}px`;
-      resultMeta.classList.add('ready');
-      canvasWrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    } catch(err){
-      console.error(err);
-      setProgress(0, err?.message || '作成に失敗しました。');
-    } finally { busy = false; validate(); }
-  }
-
-  makeBtn.addEventListener('click', buildMosaic);
-
-  function canvasBlob(){ return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1)); }
-  downloadBtn.addEventListener('click', async () => {
-    const blob = await canvasBlob(); if(!blob) return;
-    const a = document.createElement('a'); const u = URL.createObjectURL(blob);
-    a.href = u; a.download = `mosaic-${new Date().toISOString().slice(0,10)}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(u), 2000);
-  });
-  shareBtn.addEventListener('click', async () => {
-    const blob = await canvasBlob(); if(!blob) return;
-    const file = new File([blob], `mosaic-${new Date().toISOString().slice(0,10)}.png`, { type:'image/png' });
-    if(navigator.canShare && navigator.canShare({ files:[file] }) && navigator.share){
-      try { await navigator.share({ files:[file], title:'Mosaic' }); } catch(e){ if(e?.name !== 'AbortError') console.warn(e); }
-    } else downloadBtn.click();
-  });
-
-  clearBtn.addEventListener('click', () => {
-    revokeTarget();
-    sourceItems = []; tileData = []; sourceKeySet.clear();
-    targetInput.value = ''; tilesInput.value = '';
-    targetPreview.innerHTML = '';
-    targetStatus.textContent = '未選択';
-    updateSourceStatus();
-    ytStatus.textContent = '未取得';
-    ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.width = 300; canvas.height = 150;
-    canvasWrap.classList.remove('ready'); resultMeta.classList.remove('ready'); resultButtons.style.display = 'none';
-    setProgress(0, '読み込んだ素材を破棄しました。');
-    validate();
-  });
-
-  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn)); }
-})();
-</script>
+    <footer><span>THUMBNAIL MOSAIC</span><p>GitHub Pages対応・iPhoneホーム画面に追加可能。元写真、APIキー、取得サムネイルはサーバーに保存しません。YouTubeの公開サムネイルはYouTubeから取得するため、通信は発生します。</p></footer>
+  </main>
+  <script src="./app.js" defer></script>
 </body>
 </html>
