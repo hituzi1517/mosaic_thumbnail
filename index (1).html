@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="YouTubeチャンネルのサムネイルで、好きな写真をモザイクアートに。">
+  <title>サムネモザイク</title>
+  <style>
+:root {
+  color-scheme: light;
+  --paper: #f7f5ef;
+  --surface: #fffefa;
+  --ink: #24231f;
+  --muted: #67655f;
+  --line: #e4e0d7;
+  --accent: #b93425;
+  --accent-hover: #a32c1f;
+  --night: #172228;
+  font: 14px/1.6 "Geist", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; min-width: 300px; }
+button, input, summary { font: inherit; }
+button, summary { cursor: pointer; }
+a { color: inherit; text-underline-offset: .2em; }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible, .drop:focus-within { outline: 3px solid #ba4f38; outline-offset: 3px; }
+.symbols { display: none; }
+.icon { width: 19px; height: 19px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.site-header { height: 68px; padding: 0 max(28px, calc((100% - 1192px) / 2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 11px; font-size: 17px; font-weight: 800; text-decoration: none; letter-spacing: -.04em; white-space: nowrap; }
+.brand-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #fff9ee; display: grid; grid-template-columns: repeat(3, 3px); place-content: center; gap: 2px; }
+.brand-icon i { width: 3px; height: 3px; background: currentColor; border-radius: .5px; }
+.brand-icon i:nth-child(3n + 2) { opacity: .62; }
+.brand-icon i:nth-child(3) { opacity: .35; }
+.guide-link { font-size: 13px; text-decoration: none; font-weight: 700; color: #4e4a42; }
+.guide-link span { margin-left: 4px; color: var(--accent); }
+.shell { width: min(1192px, calc(100% - 56px)); margin: 0 auto; }
+.intro { padding: 39px 0 30px; }
+.intro h1 { margin: 0; font-size: clamp(29px, 3.6vw, 52px); line-height: 1.25; font-weight: 850; letter-spacing: -.065em; }
+.intro p { margin: 12px 0 0; color: var(--muted); font-size: clamp(13px, 1.32vw, 16px); }
+.mobile-break { display: none; }
+.workspace { display: grid; grid-template-columns: minmax(286px, 348px) minmax(0, 1fr); gap: 21px; align-items: start; }
+.controls, .preview { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 17px; box-shadow: 0 3px 8px #35271705; }
+.controls { padding: 23px; }
+h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.025em; }
+.field { margin-top: 23px; }
+.field label { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-weight: 750; }
+.field label .icon { color: var(--accent); width: 17px; height: 17px; }
+input[type="text"], input[type="password"] { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #d9d5cd; background: #fffefa; border-radius: 8px; font-size: 16px; color: var(--ink); }
+input::placeholder { color: #79756c; }
+.help { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.drop { position: relative; min-height: 88px; padding: 12px; display: flex; gap: 10px; align-items: center; background: #fbf8f2; border: 1px dashed #c9bfb2; border-radius: 9px; }
+.drop:hover, .drop.dragging { background: #fff0e9; border-color: var(--accent); }
+.drop input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.drop-icon, .drop img { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 7px; color: var(--accent); background: #f4e6dd; object-fit: cover; }
+.drop:has(img:not([hidden])) .drop-icon { display: none; }
+.drop-copy { min-width: 0; }
+.drop-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
+.drop-copy small { display: block; color: var(--muted); font-size: 11px; }
+details { margin: 17px 0 0; border: 1px solid var(--line); border-radius: 8px; }
+summary { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 9px 10px; font-weight: 700; font-size: 12px; color: #57534a; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary .icon { width: 16px; height: 16px; }
+details[open] summary .icon { transform: rotate(180deg); }
+.setting-tag { margin-left: 4px; color: var(--muted); font-weight: 500; }
+.settings-body { padding: 0 10px 12px; }
+.settings-body label { display: block; margin: 2px 0 6px; font-size: 12px; }
+.settings-body ol { padding-left: 17px; font-size: 12px; }
+.settings-body li { margin-top: 5px; }
+.settings-body a { color: var(--accent); }
+.settings-body code { overflow-wrap: anywhere; }
+.form-actions { display: flex; gap: 8px; margin-top: 16px; }
+.primary, .secondary { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 43px; padding: 9px 13px; border: 1px solid transparent; border-radius: 8px; font-size: 13px; font-weight: 750; white-space: nowrap; }
+.primary { width: 100%; min-height: 47px; background: var(--accent); color: white; }
+.primary:not(:disabled):hover { background: var(--accent-hover); }
+.primary:disabled { opacity: .64; }
+.secondary { color: var(--ink); background: var(--surface); border-color: #dcd7cd; }
+.secondary:not(:disabled):hover { background: #f3eee4; }
+.secondary:disabled { color: #858079; cursor: default; }
+.privacy { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); margin: 14px 0 0; font-size: 11px; }
+.privacy .icon { width: 13px; height: 13px; }
+.error { background: #faede7; color: #972e21; border-radius: 7px; padding: 9px 10px; font-size: 12px; margin: 12px 0 0; overflow-wrap: anywhere; }
+.preview { padding: 17px; }
+.preview-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 2px 12px; }
+.view-switch { display: flex; border-radius: 8px; padding: 3px; gap: 2px; background: #efede6; }
+.view-switch button { padding: 4px 11px; border: none; border-radius: 6px; background: transparent; color: #655f55; font-size: 12px; font-weight: 700; }
+.view-switch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px #2a21151a; }
+.stage { position: relative; border-radius: 10px; overflow: hidden; background: var(--night); }
+.stage-inner { height: clamp(260px, 34vw, 470px); display: grid; place-items: center; }
+.stage img, .stage canvas { width: 100%; height: 100%; min-height: 0; object-fit: contain; display: block; }
+.stage-empty { color: #ddd6c8; text-align: center; font-size: 12px; padding: 12px; }
+.sample-label, .enlarge { position: absolute; border: 1px solid #f8f2e24c; color: #fffbf3; background: #171a1bd9; border-radius: 6px; }
+.sample-label { left: 10px; top: 10px; font-size: 10px; font-weight: 700; padding: 4px 8px; }
+.enlarge { right: 10px; bottom: 10px; width: 34px; height: 34px; display: grid; place-items: center; }
+.enlarge .icon { width: 16px; height: 16px; }
+.enlarge:hover { background: #242523; }
+.preview-foot { padding: 13px 2px 0; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+.preview-info { min-width: 0; }
+.preview-info strong { font-size: 14px; font-weight: 800; display: block; overflow-wrap: anywhere; }
+.preview-info p, .coverage { margin: 1px 0 0; font-size: 11px; color: var(--muted); }
+.coverage { margin: 9px 2px 0; }
+.download .icon { width: 16px; height: 16px; }
+.progress-area { margin: 10px 2px 0; }
+.progress-text { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; }
+progress { width: 100%; height: 7px; display: block; margin-top: 5px; accent-color: var(--accent); }
+.footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 15px 1px 28px; font-size: 11px; color: var(--muted); }
+.footer a { display: inline-flex; gap: 3px; align-items: center; margin-left: 2px; font-weight: 700; }
+.footer .icon { width: 14px; height: 14px; color: var(--accent); }
+.lightbox { border: 0; border-radius: 13px; padding: 9px; background: var(--night); color: white; max-width: calc(100% - 24px); max-height: calc(100% - 24px); }
+.lightbox::backdrop { background: #171717de; }
+.lightbox button { position: sticky; top: 0; float: right; display: grid; place-items: center; border: 1px solid #ffffff5c; border-radius: 7px; width: 37px; height: 37px; background: var(--night); color: white; }
+#large-view { overflow: auto; max-width: 94vw; max-height: 88vh; display: grid; place-items: center; }
+#large-view img, #large-view canvas { max-width: 100%; max-height: 84vh; object-fit: contain; }
+@media (max-width: 800px) {
+  .shell { width: calc(100% - 36px); }
+  .site-header { padding-inline: 18px; }
+  .workspace { grid-template-columns: minmax(260px, 290px) minmax(0, 1fr); gap: 13px; }
+  .controls { padding: 17px; }
+  .preview { padding: 12px; }
+}
+@media (max-width: 640px) {
+  .site-header { height: 57px; }
+  .intro { padding: 26px 0 19px; }
+  .intro h1 { letter-spacing: -.06em; }
+  .intro p { margin-top: 8px; }
+  .workspace { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .controls { padding: 16px; }
+  .field { margin-top: 15px; }
+  .drop { min-height: 70px; }
+  .stage-inner { height: clamp(180px, 57vw, 365px); }
+}
+@media (max-width: 370px) { .mobile-break { display: initial; } }
+  </style>
+  <script type="module">
+const thumbnailRatio = 16 / 9;
+const paper = "#fffefa";
+const tileBackground = "#171c21";
+const linear = Float32Array.from({ length: 256 }, (_, channel) => {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+});
+
+const pause = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+function makeLayout(count, originalWidth, originalHeight, maxSide = 2880) {
+  const ratio = originalWidth / originalHeight;
+  const width = Math.max(1, Math.round(maxSide * Math.min(1, ratio)));
+  const height = Math.max(1, Math.round(maxSide * Math.min(1, 1 / ratio)));
+  const minRows = Math.ceil(count / width);
+  const maxRows = Math.min(count, height);
+  if (minRows > maxRows) {
+    throw new Error("元画像の縦横比では全サムネイルを並べられません。縦横比が正方形に近い画像を選んでください。");
+  }
+  const idealRows = Math.round(Math.sqrt(count * thumbnailRatio / ratio));
+  const rows = Math.max(minRows, Math.min(maxRows, idealRows));
+  const cells = [];
+  for (let row = 0; row < rows; row += 1) {
+    const start = Math.round(row * count / rows);
+    const end = Math.round((row + 1) * count / rows);
+    const columns = end - start;
+    const top = Math.round(row * height / rows);
+    const bottom = Math.round((row + 1) * height / rows);
+    for (let col = 0; col < columns; col += 1) {
+      const left = Math.round(col * width / columns);
+      const right = Math.round((col + 1) * width / columns);
+      cells.push({ x: left, y: top, width: right - left, height: bottom - top });
+    }
+  }
+  return { width, height, cells };
+}
+
+function makeCanvas(width, height, willReadFrequently = false) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  return canvas.getContext("2d", { alpha: false, willReadFrequently });
+}
+
+function signature(data) {
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  const quadrants = [0, 0, 0, 0];
+  for (let i = 0; i < 16; i += 1) {
+    const r = linear[data[i * 4]];
+    const g = linear[data[i * 4 + 1]];
+    const b = linear[data[i * 4 + 2]];
+    red += r;
+    green += g;
+    blue += b;
+    quadrants[(i >= 8 ? 2 : 0) + (i % 4 >= 2 ? 1 : 0)] += 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  red /= 16;
+  green /= 16;
+  blue /= 16;
+  const l = Math.cbrt(0.41222 * red + 0.53633 * green + 0.05145 * blue);
+  const m = Math.cbrt(0.21190 * red + 0.68070 * green + 0.10740 * blue);
+  const s = Math.cbrt(0.08830 * red + 0.28172 * green + 0.62998 * blue);
+  const levels = quadrants.map((sum) => Math.cbrt(sum / 4));
+  return [
+    0.21045 * l + 0.79362 * m - 0.00407 * s,
+    1.97799 * l - 2.42859 * m + 0.45059 * s,
+    0.02590 * l + 0.78277 * m - 0.80867 * s,
+    0.16 * (levels[0] + levels[1] - levels[2] - levels[3]),
+    0.16 * (levels[0] + levels[2] - levels[1] - levels[3]),
+  ];
+}
+
+function makeSampler() {
+  const ctx = makeCanvas(4, 4, true);
+  ctx.imageSmoothingQuality = "medium";
+  return (image, x, y, width, height) => {
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, 4, 4);
+    ctx.drawImage(image, x, y, width, height, 0, 0, 4, 4);
+    return signature(ctx.getImageData(0, 0, 4, 4).data);
+  };
+}
+
+function drawContain(ctx, image, x, y, width, height) {
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
+  const scale = Math.min(width / imageWidth, height / imageHeight);
+  const fittedWidth = imageWidth * scale;
+  const fittedHeight = imageHeight * scale;
+  ctx.fillStyle = tileBackground;
+  ctx.fillRect(x, y, width, height);
+  ctx.drawImage(image, x + (width - fittedWidth) / 2, y + (height - fittedHeight) / 2, fittedWidth, fittedHeight);
+}
+
+function makeTileCapture(count, maxWidth = 176) {
+  const budget = 36 * 1024 * 1024;
+  const width = Math.min(maxWidth, Math.max(8, Math.floor(Math.sqrt(budget / count / 4 * thumbnailRatio))));
+  const height = Math.max(4, Math.floor(width / thumbnailRatio));
+  const ctx = makeCanvas(width, height, true);
+  ctx.imageSmoothingQuality = "medium";
+  const sample = makeSampler();
+  return (image) => {
+    drawContain(ctx, image, 0, 0, width, height);
+    return { pixels: ctx.getImageData(0, 0, width, height), feature: sample(ctx.canvas, 0, 0, width, height) };
+  };
+}
+
+function buildTree(tiles, parent = null) {
+  if (!tiles.length) return null;
+  const first = tiles[0].feature;
+  const min = [...first];
+  const max = [...first];
+  for (const { feature } of tiles) {
+    for (let i = 0; i < feature.length; i += 1) {
+      min[i] = Math.min(min[i], feature[i]);
+      max[i] = Math.max(max[i], feature[i]);
+    }
+  }
+  let axis = 0;
+  for (let i = 1; i < first.length; i += 1) {
+    if (max[i] - min[i] > max[axis] - min[axis]) axis = i;
+  }
+  tiles.sort((a, b) => a.feature[axis] - b.feature[axis]);
+  const middle = Math.floor(tiles.length / 2);
+  const node = { tile: tiles[middle], parent, axis, count: tiles.length, used: false };
+  node.left = buildTree(tiles.slice(0, middle), node);
+  node.right = buildTree(tiles.slice(middle + 1), node);
+  return node;
+}
+
+function nearest(tree, target) {
+  let best = null;
+  let distance = Infinity;
+  function visit(node) {
+    if (!node?.count) return;
+    const feature = node.tile.feature;
+    const offset = target[node.axis] - feature[node.axis];
+    if (!node.used) {
+      let candidate = 0;
+      for (let i = 0; i < feature.length; i += 1) {
+        candidate += (target[i] - feature[i]) ** 2;
+      }
+      if (candidate < distance) {
+        best = node;
+        distance = candidate;
+      }
+    }
+    visit(offset < 0 ? node.left : node.right);
+    if (offset ** 2 < distance) visit(offset < 0 ? node.right : node.left);
+  }
+  visit(tree);
+  return { best, distance };
+}
+
+function take(node) {
+  node.used = true;
+  for (let current = node; current; current = current.parent) current.count -= 1;
+  return node.tile;
+}
+
+async function arrangeTiles(tiles, layout, image, signal, onProgress = () => {}) {
+  const tree = buildTree([...tiles]);
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, 1200 / Math.max(imageWidth, imageHeight));
+  const source = makeCanvas(Math.max(1, Math.round(imageWidth * scale)), Math.max(1, Math.round(imageHeight * scale)));
+  source.fillStyle = paper;
+  source.fillRect(0, 0, source.canvas.width, source.canvas.height);
+  source.drawImage(image, 0, 0, source.canvas.width, source.canvas.height);
+  const scaleX = source.canvas.width / layout.width;
+  const scaleY = source.canvas.height / layout.height;
+  const sample = makeSampler();
+  const targets = [];
+  for (let i = 0; i < layout.cells.length; i += 1) {
+    const cell = layout.cells[i];
+    const feature = sample(source.canvas, cell.x * scaleX, cell.y * scaleY, cell.width * scaleX, cell.height * scaleY);
+    targets.push({ i, feature, difficulty: nearest(tree, feature).distance });
+    if (i % 150 === 0) {
+      signal.throwIfAborted();
+      await pause();
+    }
+  }
+  source.canvas.width = 1;
+  source.canvas.height = 1;
+
+  targets.sort((a, b) => b.difficulty - a.difficulty);
+  const placements = new Array(tiles.length);
+  for (let i = 0; i < targets.length; i += 1) {
+    const { i: position, feature } = targets[i];
+    placements[position] = take(nearest(tree, feature).best);
+    if (i % 150 === 0) {
+      signal.throwIfAborted();
+      onProgress(i, tiles.length);
+      await pause();
+    }
+  }
+  return placements;
+}
+
+async function paintMosaic(layout, placements, signal, onProgress = () => {}) {
+  const output = makeCanvas(layout.width, layout.height);
+  output.imageSmoothingQuality = "medium";
+  const buffer = makeCanvas(placements[0].pixels.width, placements[0].pixels.height);
+  for (let i = 0; i < placements.length; i += 1) {
+    const { x, y, width, height } = layout.cells[i];
+    const { pixels } = placements[i];
+    buffer.putImageData(pixels, 0, 0);
+    drawContain(output, buffer.canvas, x, y, width, height);
+    if (i % 180 === 0) {
+      signal.throwIfAborted();
+      onProgress(i, placements.length);
+      await pause();
+    }
+  }
+  signal.throwIfAborted();
+  return output.canvas;
+}
+
+const channelId = /^UC[A-Za-z0-9_-]{22}$/;
+const videoId = /^[A-Za-z0-9_-]{11}$/;
+const youtubeHost = /^(?:www\.|m\.|music\.)?youtube\.com$/i;
+
+function parseChannel(value) {
+  const input = value.trim();
+  if (channelId.test(input)) return { id: input };
+  if (/^@[^\s/@?#\\]+$/u.test(input)) return { forHandle: input };
+
+  try {
+    const url = new URL(/^https?:\/\//i.test(input) ? input : "https://" + input);
+    if (!youtubeHost.test(url.hostname)) throw new Error();
+    const [first, second] = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+    if (first === "channel" && channelId.test(second)) return { id: second };
+    if (/^@[^\s/@?#\\]+$/u.test(first ?? "")) return { forHandle: first };
+    if (first === "user" && /^[A-Za-z0-9_.-]+$/.test(second ?? "")) return { forUsername: second };
+  } catch {
+    // Fall through to the same validation message for malformed or unsupported inputs.
+  }
+  throw new Error("YouTubeのチャンネルURL、@ハンドル、またはUCで始まるチャンネルIDを入力してください。");
+}
+
+function withTimeout(run, signal, milliseconds) {
+  signal.throwIfAborted();
+  const controller = new AbortController();
+  const onAbort = () => controller.abort(signal.reason);
+  const timer = setTimeout(() => controller.abort(new DOMException("通信時間の上限に達しました。", "TimeoutError")), milliseconds);
+  signal.addEventListener("abort", onAbort, { once: true });
+  return Promise.resolve().then(() => run(controller.signal)).finally(() => {
+    clearTimeout(timer);
+    signal.removeEventListener("abort", onAbort);
+  });
+}
+
+async function youtube(path, fields, key, signal) {
+  const url = new URL("https://www.googleapis.com/youtube/v3/" + path);
+  url.search = new URLSearchParams({ ...fields, key });
+  let response;
+  let data;
+  try {
+    ({ response, data } = await withTimeout(async (activeSignal) => {
+      const response = await fetch(url, { signal: activeSignal, credentials: "omit" });
+      return { response, data: await response.json() };
+    }, signal, 25000));
+  } catch {
+    signal.throwIfAborted();
+    throw new Error("YouTubeとの通信に失敗しました。接続を確認して、もう一度お試しください。");
+  }
+  if (response.ok) return data;
+  const apiError = data.error;
+  const reason = apiError?.errors?.[0]?.reason;
+  const detail = apiError?.details?.[0]?.reason;
+  if (reason === "quotaExceeded" || reason === "dailyLimitExceeded" || response.status === 429) {
+    throw new Error("YouTube Data APIの利用上限に達しました。時間をおいて、もう一度お試しください。");
+  }
+  if (detail === "API_KEY_HTTP_REFERRER_BLOCKED" || reason === "ipRefererBlocked") {
+    throw new Error("Google CloudのAPIキー設定で、「初回設定」に表示されるウェブサイトを許可してください。");
+  }
+  if (detail === "API_KEY_INVALID" || reason === "keyInvalid") {
+    throw new Error("YouTube Data APIのキーが無効です。Google Cloudで発行したキーを確認してください。");
+  }
+  if (reason === "accessNotConfigured" || detail === "SERVICE_DISABLED") {
+    throw new Error("Google Cloudで、APIキーを発行したプロジェクトの YouTube Data API v3 を有効にしてください。");
+  }
+  if (response.status === 400 || response.status === 403) {
+    throw new Error("YouTube APIにアクセスできません。キーとGoogle Cloudの制限設定を確認してください。");
+  }
+  throw new Error("YouTubeから動画一覧を取得できませんでした。時間をおいて、もう一度お試しください。");
+}
+
+async function listUploads(filter, key, signal, onPage) {
+  const channels = await youtube("channels", {
+    part: "snippet,contentDetails",
+    fields: "items(snippet/title,contentDetails/relatedPlaylists/uploads)",
+    ...filter,
+  }, key, signal);
+  const channel = channels.items?.[0];
+  const playlistId = channel?.contentDetails?.relatedPlaylists?.uploads;
+  if (!playlistId) throw new Error("チャンネルが見つかりませんでした。URLや@ハンドルを確認してください。");
+
+  const seenIds = new Set();
+  const seenPages = new Set();
+  const videos = [];
+  let withoutThumbnail = 0;
+  let pageToken;
+  do {
+    const page = await youtube("playlistItems", {
+      part: "snippet,contentDetails",
+      fields: "nextPageToken,pageInfo/totalResults,items(contentDetails/videoId,snippet(thumbnails(medium/url,high/url,default/url)))",
+      playlistId,
+      maxResults: "50",
+      ...(pageToken ? { pageToken } : {}),
+    }, key, signal);
+    for (const item of page.items ?? []) {
+      const id = item.contentDetails?.videoId;
+      if (!videoId.test(id ?? "") || seenIds.has(id)) continue;
+      seenIds.add(id);
+      const thumbnails = item.snippet?.thumbnails;
+      const urls = [thumbnails?.medium?.url, thumbnails?.high?.url, thumbnails?.default?.url].filter(Boolean);
+      if (urls.length) {
+        videos.push({ id, urls });
+      } else {
+        withoutThumbnail += 1;
+      }
+    }
+    onPage(seenIds.size, page.pageInfo?.totalResults ?? 0);
+    pageToken = page.nextPageToken;
+    if (pageToken && seenPages.has(pageToken)) {
+      throw new Error("YouTubeから同じページが返されたため、動画一覧を最後まで取得できませんでした。もう一度お試しください。");
+    }
+    if (pageToken) seenPages.add(pageToken);
+  } while (pageToken);
+  if (!videos.length) throw new Error("このチャンネルに、サムネイルを取得できる公開動画が見つかりませんでした。");
+  return { title: channel.snippet?.title || "YouTubeチャンネル", videos, withoutThumbnail };
+}
+
+const thumbnailHost = /^(?:i[1-4]?\.ytimg\.com|img\.youtube\.com)$/;
+const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
+
+function thumbnailUrls({ id, urls }) {
+  const provided = urls.flatMap((value) => {
+    try {
+      const url = new URL(value);
+      if (url.protocol === "https:" && !url.username && !url.password && !url.port && thumbnailHost.test(url.hostname)) return [url.href];
+    } catch {
+      // The standard CDN paths remain available when API metadata has a malformed URL.
+    }
+    return [];
+  });
+  const standard = ["mqdefault", "hqdefault", "default"].map((size) => "https://i.ytimg.com/vi/" + id + "/" + size + ".jpg");
+  return new Set([provided[0] ?? standard[0], standard[0], ...provided.slice(1), ...standard.slice(1)]);
+}
+
+async function readThumbnail(video, decode, signal) {
+  let issue = "missing";
+  for (const url of thumbnailUrls(video)) {
+    let response;
+    let blob;
+    try {
+      ({ response, blob } = await withTimeout(async (activeSignal) => {
+        const response = await fetch(url, { signal: activeSignal, credentials: "omit", mode: "cors" });
+        const type = response.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+        if (response.ok && supportedTypes.has(type)) return { response, blob: await response.blob() };
+        void response.body?.cancel().catch(() => {});
+        return { response, blob: null };
+      }, signal, 12000));
+    } catch {
+      signal.throwIfAborted();
+      if (issue === "missing") issue = "network";
+      continue;
+    }
+    signal.throwIfAborted();
+    if (response.status === 429) return { issue: "limited" };
+    if (response.status === 404 || response.status === 410) continue;
+    if (!response.ok) {
+      if (issue === "missing") issue = "network";
+      continue;
+    }
+    try {
+      if (blob?.size) {
+        const tile = await decode(blob);
+        signal.throwIfAborted();
+        return { tile };
+      }
+    } catch {
+      signal.throwIfAborted();
+    }
+    issue = "decode";
+  }
+  return { issue };
+}
+
+function randomGenerator(seed) {
+  return () => {
+    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+}
+
+function polygon(ctx, color, points) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(...points[0]);
+  for (const point of points.slice(1)) ctx.lineTo(...point);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function lighthouse() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1440;
+  canvas.height = 861;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  ctx.scale(1.44, 1.435);
+  const sky = ctx.createLinearGradient(0, 0, 0, 490);
+  sky.addColorStop(0, "#152636");
+  sky.addColorStop(0.5, "#344d57");
+  sky.addColorStop(0.75, "#7d6860");
+  sky.addColorStop(1, "#cf936a");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 1000, 600);
+  const horizon = ctx.createRadialGradient(710, 404, 30, 710, 404, 475);
+  horizon.addColorStop(0, "#ffba71bc");
+  horizon.addColorStop(1, "#1d314200");
+  ctx.fillStyle = horizon;
+  ctx.fillRect(0, 0, 1000, 483);
+  const moon = ctx.createRadialGradient(742, 177, 20, 742, 177, 82);
+  moon.addColorStop(0, "#ffeab590");
+  moon.addColorStop(1, "#ffda9c00");
+  ctx.fillStyle = moon;
+  ctx.fillRect(646, 81, 192, 192);
+  ctx.fillStyle = "#ffe6ad";
+  ctx.beginPath();
+  ctx.arc(742, 177, 44, 0, Math.PI * 2);
+  ctx.fill();
+
+  const random = randomGenerator(1931);
+  for (let i = 0; i < 95; i += 1) {
+    const x = random() * 1000;
+    const y = random() * 345;
+    ctx.fillStyle = y < 190 ? "#ffeed25b" : "#fee0b22e";
+    ctx.fillRect(x, y, 1 + random() * 2.5, 1 + random());
+  }
+  for (let i = 0; i < 15; i += 1) {
+    const y = 208 + random() * 185;
+    const x = random() * 1100 - 130;
+    ctx.fillStyle = i % 3 === 0 ? "#e5a07736" : "#192c3545";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 50 + random() * 110, 2 + random() * 8, -0.02, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const ocean = ctx.createLinearGradient(0, 398, 0, 600);
+  ocean.addColorStop(0, "#526365");
+  ocean.addColorStop(0.42, "#344f5c");
+  ocean.addColorStop(1, "#132a39");
+  ctx.fillStyle = ocean;
+  ctx.fillRect(0, 397, 1000, 203);
+  for (let i = 0; i < 100; i += 1) {
+    const y = 399 + random() * 190;
+    const x = random() * 1000;
+    const reflection = Math.abs(x - 737) < 80 + (y - 397) / 2;
+    ctx.fillStyle = reflection ? "#eeb98765" : "#7fa0a04d";
+    ctx.fillRect(x, y, 4 + random() * (reflection ? 95 : 49), 1 + random() * 2.6);
+  }
+
+  polygon(ctx, "#223740", [[0,490],[83,473],[119,441],[158,435],[197,391],[255,387],[292,412],[319,425],[370,448],[424,450],[468,477],[524,484],[555,519],[502,541],[442,547],[341,573],[227,600],[0,600]]);
+  polygon(ctx, "#14252d", [[0,512],[80,483],[151,472],[191,427],[226,418],[260,432],[308,435],[351,465],[399,470],[451,490],[508,502],[521,519],[464,541],[379,546],[278,593],[185,600],[0,600]]);
+  polygon(ctx, "#30434a", [[0,521],[105,498],[158,483],[217,456],[252,444],[295,446],[320,464],[278,473],[215,471],[167,501],[60,531],[0,542]]);
+  polygon(ctx, "#394e52", [[0,573],[98,553],[164,529],[239,517],[273,497],[336,492],[390,476],[447,489],[413,504],[343,516],[306,532],[217,546],[151,563],[52,593],[0,595]]);
+  polygon(ctx, "#21343e", [[0,577],[116,571],[220,556],[265,544],[359,535],[387,543],[254,597],[98,600],[0,600]]);
+
+  const beam = ctx.createLinearGradient(322, 300, 950, 185);
+  beam.addColorStop(0, "#ffcd73bd");
+  beam.addColorStop(0.7, "#ffd0922b");
+  beam.addColorStop(1, "#ffd09200");
+  polygon(ctx, beam, [[320,289],[1000,146],[1000,229],[320,308]]);
+  polygon(ctx, "#d4b18f", [[267,420],[281,323],[307,323],[324,427],[302,433]]);
+  polygon(ctx, "#f4d0a1", [[267,420],[281,323],[294,323],[294,429]]);
+  polygon(ctx, "#ab5845", [[274,367],[278,344],[311,345],[315,370]]);
+  polygon(ctx, "#803f35", [[296,345],[311,345],[315,370],[297,369]]);
+  polygon(ctx, "#55332e", [[279,321],[279,288],[308,285],[319,315],[311,326],[272,327]]);
+  ctx.fillStyle = "#f7bd62";
+  ctx.fillRect(283, 287, 27, 25);
+  ctx.fillStyle = "#ffedb7";
+  ctx.fillRect(292, 289, 13, 20);
+  ctx.fillStyle = "#6b4637";
+  ctx.fillRect(288, 289, 2, 25);
+  ctx.fillRect(305, 288, 2, 25);
+  polygon(ctx, "#73392f", [[271,288],[295,256],[320,287]]);
+  polygon(ctx, "#c97752", [[271,288],[295,256],[298,288]]);
+  ctx.fillStyle = "#5b3b32";
+  ctx.fillRect(292, 249, 4, 14);
+  ctx.fillRect(284, 399, 10, 24);
+  return canvas;
+}
+
+async function makeDemo(signal) {
+  const original = lighthouse();
+  const layout = makeLayout(1056, original.width, original.height, 1440);
+  const capture = makeTileCapture(layout.cells.length, 48);
+  const sample = original.getContext("2d", { willReadFrequently: true });
+  const source = sample.getImageData(0, 0, original.width, original.height);
+  const miniature = document.createElement("canvas");
+  miniature.width = 48;
+  miniature.height = 27;
+  const ctx = miniature.getContext("2d", { alpha: false });
+  const random = randomGenerator(32411);
+  const placements = layout.cells.map(({ x, y, width, height }, i) => {
+    const center = ((y + (height >> 1)) * original.width + x + (width >> 1)) * 4;
+    const rgb = [source.data[center], source.data[center + 1], source.data[center + 2]];
+    const color = (offset) => "rgb(" + rgb.map((value, channel) => Math.min(255, Math.max(0, value + offset + (channel - 1) * 3))).join(" ") + ")";
+    const variation = (random() - 0.5) * 29;
+    const gradient = ctx.createLinearGradient(0, 0, 48, 27);
+    gradient.addColorStop(0, color(variation + 18));
+    gradient.addColorStop(1, color(variation - 12));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 48, 27);
+    const peak = 4 + random() * 22;
+    polygon(ctx, color(variation + 12), [[0,23],[peak,10 + random() * 7],[peak + 12,20],[41,9 + random() * 8],[48,17],[48,27],[0,27]]);
+    polygon(ctx, color(variation - 13), [[0,23],[13,18],[24,24],[39,18],[48,20],[48,27],[0,27]]);
+    ctx.fillStyle = color(variation + 29);
+    if (i % 4 === 0) {
+      ctx.beginPath();
+      ctx.arc(8 + random() * 35, 5 + random() * 8, 1.8 + random() * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#10141740";
+    ctx.fillRect(35, 21, 11, 4);
+    ctx.fillStyle = color(variation + 55);
+    ctx.fillRect(37, 22, 6, 1);
+    ctx.strokeStyle = "#e7d2b526";
+    ctx.strokeRect(0.5, 0.5, 47, 26);
+    return capture(miniature);
+  });
+  const output = await paintMosaic(layout, placements, signal);
+  return { original: original.toDataURL("image/png"), output, count: placements.length };
+}
+
+const get = (id) => document.getElementById(id);
+const controls = {
+  form: get("mosaic-form"),
+  channel: get("channel"),
+  original: get("original"),
+  drop: get("drop"),
+  apiKey: get("api-key"),
+  settings: get("api-settings"),
+  generate: get("generate"),
+  cancel: get("cancel"),
+  error: get("error"),
+  stage: get("stage"),
+  source: get("source-preview"),
+  empty: get("stage-empty"),
+  sample: get("sample-label"),
+  title: get("work-title"),
+  metadata: get("work-meta"),
+  progressArea: get("progress-area"),
+  progress: get("progress"),
+  progressLabel: get("progress-label"),
+  progressCount: get("progress-count"),
+  coverage: get("coverage"),
+  mosaicTab: get("show-mosaic"),
+  originalTab: get("show-original"),
+  enlarge: get("enlarge"),
+  download: get("download"),
+  lightbox: get("lightbox"),
+  largeView: get("large-view"),
+};
+const number = new Intl.NumberFormat("ja-JP");
+const fmt = (value) => number.format(value);
+const sampleRun = new AbortController();
+let canvas = get("mosaic");
+let originalUrl = "";
+let sampleUrl = "";
+let originalImage = null;
+let selectedName = "";
+let selection = 0;
+let result = null;
+let mode = "mosaic";
+let job = null;
+let downloadInProgress = false;
+
+get("site-referrer").textContent = location.origin + "/*";
+
+function error(message = "") {
+  controls.error.textContent = message;
+  controls.error.hidden = !message;
+}
+
+function clearResult() {
+  result = null;
+  canvas.width = 1;
+  canvas.height = 1;
+  controls.coverage.hidden = true;
+  controls.coverage.textContent = "";
+}
+
+function show(modeToShow = mode) {
+  mode = modeToShow;
+  const sourceUrl = originalUrl || sampleUrl;
+  const showOriginal = mode === "original" && !!sourceUrl;
+  if (sourceUrl && controls.source.getAttribute("src") !== sourceUrl) controls.source.src = sourceUrl;
+  if (!sourceUrl) controls.source.removeAttribute("src");
+  controls.source.alt = originalUrl ? "選択した元画像" : "サンプル作品の元画像";
+  controls.source.hidden = !showOriginal;
+  canvas.hidden = mode !== "mosaic" || !result;
+  controls.empty.hidden = !canvas.hidden || showOriginal;
+  controls.empty.textContent = originalUrl ? "生成したモザイクがここに表示されます" : "元画像を選ぶとここに表示されます";
+  controls.sample.hidden = !!originalUrl || !sampleUrl;
+  controls.mosaicTab.setAttribute("aria-pressed", String(mode === "mosaic"));
+  controls.originalTab.setAttribute("aria-pressed", String(mode === "original"));
+  controls.download.disabled = !result || !!job || downloadInProgress;
+  controls.enlarge.hidden = canvas.hidden && !showOriginal;
+}
+
+function setResult(output, title, name, count) {
+  output.id = "mosaic";
+  output.setAttribute("aria-label", "モザイクアートのプレビュー");
+  canvas.replaceWith(output);
+  canvas.width = 1;
+  canvas.height = 1;
+  canvas = output;
+  result = { name };
+  controls.title.textContent = title;
+  controls.metadata.textContent = fmt(count) + "枚 ｜ " + fmt(canvas.width) + " × " + fmt(canvas.height) + " px";
+  show("mosaic");
+}
+
+function loadImage(url) {
+  const image = new Image();
+  return new Promise((resolve, reject) => {
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("画像を開けませんでした。JPEG・PNGなど、端末で表示できる画像を選んでください。"));
+    image.src = url;
+  });
+}
+
+async function selectFile(file) {
+  if (!file || job) return;
+  const current = ++selection;
+  error();
+  const url = URL.createObjectURL(file);
+  let image;
+  try {
+    image = await loadImage(url);
+  } catch (problem) {
+    URL.revokeObjectURL(url);
+    if (current === selection) error(problem.message);
+    return;
+  }
+  if (current !== selection || job) {
+    URL.revokeObjectURL(url);
+    return;
+  }
+  sampleRun.abort();
+  sampleUrl = "";
+  if (originalUrl) URL.revokeObjectURL(originalUrl);
+  originalUrl = url;
+  originalImage = image;
+  selectedName = file.name;
+  get("file-title").textContent = file.name;
+  get("file-help").textContent = fmt(image.naturalWidth) + " × " + fmt(image.naturalHeight) + " px";
+  const thumbnail = get("selected-preview");
+  thumbnail.src = url;
+  thumbnail.hidden = false;
+  clearResult();
+  controls.title.textContent = file.name;
+  controls.metadata.textContent = "生成前";
+  show("original");
+}
+
+function updateProgress(label, current, total) {
+  controls.progressArea.hidden = false;
+  if (controls.progressLabel.textContent !== label) controls.progressLabel.textContent = label;
+  controls.progressCount.textContent = total ? fmt(current) + " / " + fmt(total) : current ? fmt(current) + "件" : "";
+  if (total && current <= total) {
+    controls.progress.max = total;
+    controls.progress.value = current;
+  } else {
+    controls.progress.removeAttribute("value");
+  }
+}
+
+function setBusy(active) {
+  controls.channel.disabled = active;
+  controls.original.disabled = active;
+  controls.apiKey.disabled = active;
+  controls.generate.disabled = active;
+  controls.generate.firstElementChild.textContent = active ? "作成中…" : "モザイクを作る";
+  controls.cancel.hidden = !active;
+  controls.cancel.disabled = false;
+  controls.stage.setAttribute("aria-busy", String(active));
+  if (!active) controls.progressArea.hidden = true;
+  show();
+}
+
+async function captureImage(blob, capture) {
+  let bitmap;
+  if (typeof createImageBitmap === "function") {
+    try {
+      bitmap = await createImageBitmap(blob);
+    } catch {
+      // Some Safari decoders can open images that createImageBitmap rejects.
+    }
+  }
+  if (bitmap) {
+    try {
+      return capture(bitmap);
+    } finally {
+      bitmap.close();
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  try {
+    return capture(await loadImage(url));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function thumbnailIssues(issues) {
+  const labels = {
+    missing: "画像なし",
+    network: "画像配信先との通信エラー",
+    limited: "画像配信先のアクセス制限",
+    decode: "画像を開けなかった",
+  };
+  return Object.entries(labels).filter(([key]) => issues[key]).map(([key, label]) => label + " " + fmt(issues[key]) + "件").join("、");
+}
+
+async function downloadTiles(videos, signal) {
+  const capture = makeTileCapture(videos.length);
+  const tiles = new Array(videos.length);
+  const issues = { missing: 0, network: 0, limited: 0, decode: 0 };
+  let cursor = 0;
+  let processed = 0;
+  let lastUpdate = 0;
+  const decode = (blob) => captureImage(blob, capture);
+  async function consume(end) {
+    while (cursor < end) {
+      signal.throwIfAborted();
+      const index = cursor++;
+      const { tile, issue } = await readThumbnail(videos[index], decode, signal);
+      if (tile) tiles[index] = tile;
+      else issues[issue] += 1;
+      processed += 1;
+      const now = performance.now();
+      if (processed === videos.length || now - lastUpdate > 90) {
+        updateProgress("サムネイルを読み込み中", processed, videos.length);
+        lastUpdate = now;
+      }
+    }
+  }
+  async function batch(end) {
+    const tasks = Array.from({ length: Math.min(8, end - cursor) }, () => consume(end));
+    // Wait for every download slot to stop before a cancelled job can be restarted.
+    const outcomes = await Promise.allSettled(tasks);
+    const failure = outcomes.find((outcome) => outcome.status === "rejected");
+    if (failure) throw failure.reason;
+  }
+  const firstBatch = Math.min(8, videos.length);
+  await batch(firstBatch);
+  if (issues.network + issues.limited === firstBatch) {
+    throw new Error("動画一覧は取得できましたが、最初の " + fmt(firstBatch) + " 件のサムネイルを読み込めませんでした（" + thumbnailIssues(issues) + "）。時間をおいて再試行してください。");
+  }
+  await batch(videos.length);
+  return { tiles: tiles.filter(Boolean), issues };
+}
+
+controls.form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (job) return;
+  error();
+  let filter;
+  try {
+    filter = parseChannel(controls.channel.value);
+  } catch (problem) {
+    error(problem.message);
+    controls.channel.focus();
+    return;
+  }
+  if (!originalImage) {
+    error("モザイクの元になる画像を1枚選んでください。");
+    controls.original.focus();
+    return;
+  }
+  const key = controls.apiKey.value.trim();
+  if (!key) {
+    controls.settings.open = true;
+    error("最初に YouTube Data API v3 のAPIキーを入力してください。");
+    controls.apiKey.focus();
+    return;
+  }
+
+  job = new AbortController();
+  const { signal } = job;
+  clearResult();
+  controls.title.textContent = selectedName;
+  controls.metadata.textContent = "作成中";
+  show("original");
+  setBusy(true);
+  updateProgress("チャンネルと公開動画を検索中", 0, 0);
+  let successful = false;
+  try {
+    const channel = await listUploads(filter, key, signal, (count, total) => {
+      updateProgress("公開動画の一覧を取得中", count, total);
+    });
+    updateProgress("サムネイルを読み込み中", 0, channel.videos.length);
+    const { tiles, issues } = await downloadTiles(channel.videos, signal);
+    issues.missing += channel.withoutThumbnail;
+    if (!tiles.length) {
+      throw new Error("動画一覧は取得できましたが、使えるサムネイル画像がありませんでした（" + thumbnailIssues(issues) + "）。");
+    }
+
+    const layout = makeLayout(tiles.length, originalImage.naturalWidth, originalImage.naturalHeight);
+    updateProgress("元画像に合わせて配置を計算中", 0, tiles.length);
+    await pause();
+    const placements = await arrangeTiles(tiles, layout, originalImage, signal, (count, total) => {
+      updateProgress("元画像に合わせて配置を計算中", count, total);
+    });
+    updateProgress("モザイクを描画中", 0, tiles.length);
+    const output = await paintMosaic(layout, placements, signal, (count, total) => {
+      updateProgress("モザイクを描画中", count, total);
+    });
+    const safeName = channel.title.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").slice(0, 70);
+    setResult(output, channel.title, safeName + "_mosaic.png", tiles.length);
+
+    const excluded = thumbnailIssues(issues);
+    controls.coverage.textContent = excluded
+      ? "取得できた " + fmt(tiles.length) + " 枚を使用しました。除外の内訳は " + excluded + " です。"
+      : "動画一覧から取得した全サムネイルを、1枚ずつ使用しました。";
+    controls.coverage.hidden = false;
+    successful = true;
+  } catch (problem) {
+    controls.metadata.textContent = signal.aborted ? "作成を中止しました" : "作成できませんでした";
+    if (!signal.aborted) error(problem.message || "処理中にエラーが発生しました。");
+  } finally {
+    job = null;
+    setBusy(false);
+    if (successful && matchMedia("(max-width: 640px)").matches) {
+      controls.stage.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    }
+  }
+});
+
+controls.original.addEventListener("change", () => {
+  const file = controls.original.files[0];
+  controls.original.value = "";
+  void selectFile(file);
+});
+for (const type of ["dragenter", "dragover", "dragleave", "drop"]) {
+  controls.drop.addEventListener(type, (event) => {
+    event.preventDefault();
+    controls.drop.classList.toggle("dragging", !job && (type === "dragenter" || type === "dragover"));
+    if (type === "drop") void selectFile(event.dataTransfer.files[0]);
+  });
+}
+controls.cancel.addEventListener("click", () => {
+  if (!job) return;
+  controls.cancel.disabled = true;
+  updateProgress("中止しています…", 0, 0);
+  job.abort();
+});
+get("guide-link").addEventListener("click", () => { controls.settings.open = true; });
+controls.mosaicTab.addEventListener("click", () => show("mosaic"));
+controls.originalTab.addEventListener("click", () => show("original"));
+
+controls.download.addEventListener("click", () => {
+  if (!result || job || downloadInProgress) return;
+  const fileName = result.name;
+  downloadInProgress = true;
+  show();
+  canvas.toBlob((blob) => {
+    downloadInProgress = false;
+    show();
+    if (!blob) {
+      error("PNGファイルを作成できませんでした。もう一度お試しください。");
+      return;
+    }
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = fileName;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }, "image/png");
+});
+controls.enlarge.addEventListener("click", () => {
+  if (mode === "original") {
+    const enlargedSource = controls.source.cloneNode();
+    enlargedSource.removeAttribute("id");
+    controls.largeView.append(enlargedSource);
+  } else {
+    const large = document.createElement("canvas");
+    const scale = Math.min(1, 1600 / Math.max(canvas.width, canvas.height));
+    large.width = Math.max(1, Math.round(canvas.width * scale));
+    large.height = Math.max(1, Math.round(canvas.height * scale));
+    large.getContext("2d").drawImage(canvas, 0, 0, large.width, large.height);
+    controls.largeView.append(large);
+  }
+  controls.lightbox.showModal();
+});
+get("close-lightbox").addEventListener("click", () => controls.lightbox.close());
+controls.lightbox.addEventListener("close", () => controls.largeView.replaceChildren());
+
+show();
+makeDemo(sampleRun.signal).then(({ original, output, count }) => {
+  if (originalUrl) return;
+  sampleUrl = original;
+  setResult(output, "岬の灯台", "lighthouse_sample.png", count);
+}).catch(() => {
+  if (sampleRun.signal.aborted) return;
+  controls.title.textContent = "モザイク作品";
+  controls.metadata.textContent = "元画像を選んで作成";
+  show();
+});
+  </script>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" class="symbols" aria-hidden="true">
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-4-4L7 21"/></symbol>
+    <symbol id="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 15v5h16v-5"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="expand" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  </svg>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="サムネモザイク ホーム">
+      <span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span>サムネモザイク</span>
+    </a>
+    <a class="guide-link" href="#api-settings" id="guide-link">使い方 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="shell">
+    <div class="intro">
+      <h1>サムネを集めて、<br class="mobile-break">一枚の絵に。</h1>
+      <p>YouTubeチャンネルのサムネイルで、好きな写真をモザイクアートに。</p>
+    </div>
+    <div class="workspace">
+      <section class="controls" aria-labelledby="controls-title">
+        <h2 id="controls-title">モザイクを作る</h2>
+        <form id="mosaic-form" novalidate>
+          <div class="field">
+            <label for="channel"><svg class="icon"><use href="#play"/></svg> YouTubeチャンネル</label>
+            <input id="channel" name="channel" type="text" placeholder="https://www.youtube.com/@…" aria-describedby="channel-help" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <p class="help" id="channel-help">チャンネルURL・@ハンドル・チャンネルID</p>
+          </div>
+          <div class="field">
+            <label for="original"><svg class="icon"><use href="#image"/></svg> 元画像</label>
+            <div class="drop" id="drop">
+              <input id="original" type="file" accept="image/*" aria-label="元画像を選択">
+              <span class="drop-icon" aria-hidden="true"><svg class="icon"><use href="#image"/></svg></span>
+              <img id="selected-preview" alt="" hidden>
+              <span class="drop-copy"><span id="file-title">画像を選ぶ</span><small id="file-help">ここにドラッグ＆ドロップもできます</small></span>
+            </div>
+          </div>
+          <details id="api-settings">
+            <summary><span>初回設定 <span class="setting-tag">APIキー</span></span><svg class="icon"><use href="#chevron"/></svg></summary>
+            <div class="settings-body">
+              <label for="api-key">YouTube Data API v3 のキー</label>
+              <input type="password" id="api-key" name="api-key" placeholder="APIキーを貼り付け" autocomplete="off" spellcheck="false" autocapitalize="off">
+              <ol>
+                <li><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Google Cloud</a> でプロジェクトを選び、YouTube Data API v3 を有効にします。</li>
+                <li>「認証情報」からAPIキーを作成します。キーのAPI制限で YouTube Data API v3 を選びます。</li>
+                <li>キーのウェブサイト制限に <code id="site-referrer">このサイトのドメイン/*</code> を追加し、上の欄にキーを貼り付けます。</li>
+              </ol>
+              <p class="help">キーはこのタブに入力している間だけ使い、リクエストをGoogleに直接送ります。</p>
+            </div>
+          </details>
+          <div class="form-actions">
+            <button type="submit" class="primary" id="generate"><span>モザイクを作る</span><svg class="icon"><use href="#arrow"/></svg></button>
+            <button type="button" id="cancel" class="secondary" hidden>中止</button>
+          </div>
+          <p class="error" id="error" role="alert" hidden></p>
+        </form>
+        <p class="privacy"><svg class="icon"><use href="#lock"/></svg> 元画像の処理は端末内で行います。</p>
+      </section>
+      <section class="preview" aria-labelledby="preview-title">
+        <div class="preview-head">
+          <h2 id="preview-title">プレビュー</h2>
+          <div class="view-switch" aria-label="表示する画像">
+            <button id="show-mosaic" type="button" aria-pressed="true">モザイク</button>
+            <button id="show-original" type="button" aria-pressed="false">元画像</button>
+          </div>
+        </div>
+        <div class="stage" id="stage" aria-busy="false">
+          <div class="stage-inner" id="stage-inner">
+            <canvas id="mosaic" aria-label="モザイクアートのプレビュー"></canvas>
+            <img id="source-preview" alt="選択した元画像" hidden>
+            <span id="stage-empty" class="stage-empty" hidden>元画像を選ぶとここに表示されます</span>
+          </div>
+          <span class="sample-label" id="sample-label">サンプル作品</span>
+          <button id="enlarge" class="enlarge" type="button" aria-label="プレビューを拡大" title="拡大"><svg class="icon"><use href="#expand"/></svg></button>
+        </div>
+        <div class="progress-area" id="progress-area" hidden>
+          <div class="progress-text"><span id="progress-label" role="status"></span><span id="progress-count"></span></div>
+          <progress id="progress" aria-label="モザイク生成の進行状況"></progress>
+        </div>
+        <div class="preview-foot">
+          <div class="preview-info"><strong id="work-title">岬の灯台</strong><p id="work-meta">サンプルを読み込み中</p></div>
+          <button id="download" class="secondary download" type="button" disabled><svg class="icon"><use href="#icon-download"/></svg> PNGで保存</button>
+        </div>
+        <p id="coverage" class="coverage" hidden></p>
+      </section>
+    </div>
+    <footer class="footer">
+      <span>取得できたサムネイルを1枚ずつ、元の色のまま配置します。</span>
+      <span>サムネイル提供 <a href="https://www.youtube.com/" target="_blank" rel="noopener"><svg class="icon"><use href="#play"/></svg> YouTube</a></span>
+    </footer>
+  </main>
+  <dialog id="lightbox" class="lightbox">
+    <button id="close-lightbox" type="button" aria-label="拡大表示を閉じる"><svg class="icon"><use href="#close"/></svg></button>
+    <div id="large-view"></div>
+  </dialog>
+  <noscript>モザイクを作成するには JavaScript を有効にしてください。</noscript>
+</body>
+</html>
