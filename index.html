@@ -16,10 +16,10 @@
 <body>
   <main class="app">
     <header class="hero">
-      <div class="eyebrow"><span class="orbit"></span> THUMBNAIL MOSAIC <span class="version">v1.0</span></div>
+      <div class="eyebrow"><span class="orbit"></span> THUMBNAIL MOSAIC <span class="version">v1.1</span></div>
       <h1>動画の記憶で、<br><em>一枚のアートを。</em></h1>
       <p>チャンネルの公開サムネイルを最初から最後まで取得。<br>何千枚もの画像でモザイクアートを作れる、YouTube専用のWebアプリ。</p>
-      <div class="hero-meta"><span><i class="point"></i> 取得枚数の独自上限なし</span><span><i class="point"></i> 保存は作ったときだけ</span></div>
+      <div class="hero-meta"><span><i class="point"></i> 取得件数の独自上限なし</span><span><i class="point"></i> 進行度を常時表示</span></div>
     </header>
 
     <section class="panel" id="targetSection">
@@ -36,7 +36,7 @@
       <div class="section-header"><span class="step">02</span><div><h2>YouTubeから集める</h2><p>チャンネル・再生リストのすべての公開動画を収集します。</p></div></div>
       <div class="form-grid">
         <div class="field"><label for="apiKey">YouTube Data APIキー <span>必須</span></label><input type="password" id="apiKey" autocomplete="off" placeholder="AIza..." spellcheck="false"><small>端末の一時メモリでのみ使用。保存はしません。</small></div>
-        <div class="field"><label for="sourceType">取得元</label><select id="sourceType"><option value="channel">YouTubeチャンネル</option><option value="playlist">再生リスト</option></select><small>チャンネルは通常の公開アップロード一覧を対象にします。</small></div>
+        <div class="field"><label for="sourceType">取得元</label><select id="sourceType"><option value="channel">YouTubeチャンネル</option><option value="playlist">再生リスト</option></select><small>チャンネルは公開アップロード一覧を対象にします。</small></div>
       </div>
       <div class="field"><label for="sourceUrl" id="sourceLabel">チャンネルURL / @ハンドル / UCで始まるID</label><input type="text" id="sourceUrl" autocomplete="off" placeholder="https://www.youtube.com/@example" spellcheck="false"></div>
       <div class="button-pair"><button id="fetchBtn" class="primary" type="button">全サムネイルを取得 <span aria-hidden="true">→</span></button><button id="stopFetchBtn" class="ghost" type="button" disabled>取得を停止</button></div>
@@ -46,12 +46,12 @@
         <div class="progress-details"><span id="metadataCount">0件取得</span><span id="metadataPages">0ページ</span></div>
         <p class="progress-note" id="metadataStatus" aria-live="polite"></p>
       </div>
-      <div class="summary" id="sourceSummary"><div class="summary-item"><strong id="totalCount">0</strong><span>取得した動画</span></div><div class="summary-item"><strong id="uniqueCount">0</strong><span>重複を除いた素材</span></div><div class="summary-item"><strong id="pageCount">0</strong><span>取得ページ</span></div></div>
-      <p class="hint">「全件」はサイト側で上限を設けないという意味です。YouTube APIの日次割り当て、アクセス権、iPhoneのメモリ・ネットワーク状況によって途中で止まることがあります。公開されていない動画は取得できません。</p>
+      <div class="summary" id="sourceSummary"><div class="summary-item"><strong id="totalCount">0</strong><span>取得した動画</span></div><div class="summary-item"><strong id="uniqueCount">0</strong><span>素材として保持</span></div><div class="summary-item"><strong id="pageCount">0</strong><span>取得ページ</span></div></div>
+      <p class="hint">「全件」はサイト側で上限を設けないという意味です。YouTube APIの日次割り当て、アクセス権、iPhoneのメモリ・ネットワーク状況によって途中で止まることがあります。</p>
     </section>
 
     <section class="panel" id="optionsSection">
-      <div class="section-header"><span class="step">03</span><div><h2>仕上がりを調整</h2><p>iPhoneなら、まず「バランス」設定がおすすめです。</p></div></div>
+      <div class="section-header"><span class="step">03</span><div><h2>仕上がりを調整</h2><p>重複使用を抑えつつ、できるだけ各サムネイルを最低1回使います。</p></div></div>
       <div class="option-grid">
         <div class="range-box"><div class="range-title"><label for="columns">タイルの細かさ</label><output id="columnsValue">64列</output></div><input type="range" id="columns" min="20" max="140" value="64" step="2"><small>細かくするほど処理が増えます</small></div>
         <div class="range-box"><div class="range-title"><label for="outSize">出力画像の幅</label><output id="outSizeValue">1600px</output></div><input type="range" id="outSize" min="800" max="2800" value="1600" step="200"><small>大きい出力はiPhoneのメモリを多く使います</small></div>
@@ -62,7 +62,7 @@
     </section>
 
     <section class="panel" id="buildSection">
-      <div class="section-header"><span class="step">04</span><div><h2>モザイクアートを生成</h2><p>画像を1枚ずつ読み込み、解析し、最後に描画します。</p></div></div>
+      <div class="section-header"><span class="step">04</span><div><h2>モザイクアートを生成</h2><p>サムネイルを1枚ずつ読み込み、解析し、最後に描画します。</p></div></div>
       <div class="field"><label for="proxyUrl">画像読み込み用 Worker URL <span class="optional">CORS対策</span></label><input id="proxyUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-worker.example.workers.dev"><small>サムネイルをCanvasで読み込めない場合に必要。ZIP内の <code>worker/thumb-proxy.js</code> を使えます。設定は保存されません。</small></div>
       <div class="button-pair"><button id="buildBtn" class="primary" type="button" disabled>モザイクを作成 <span aria-hidden="true">✦</span></button><button id="stopBuildBtn" class="ghost" type="button" disabled>解析を停止</button></div>
       <div class="progress-panel" id="buildPanel" hidden>

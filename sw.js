@@ -1,21 +1,19 @@
-// Only the static app shell is cached. No YouTube data, local photos, or API key.
-const CACHE = 'yt-mosaic-shell-v1';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
-const allowedUrls = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).href));
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+const CACHE = 'youtube-mosaic-shell-v1';
+const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
-self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
-self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  if (request.method !== 'GET' || !allowedUrls.has(request.url)) return;
-  event.respondWith(fetch(request, { cache: 'no-store' }).then(async (response) => {
-    if (response.ok) {
-      const cache = await caches.open(CACHE);
-      await cache.put(request, response.clone());
-    }
-    return response;
-  }).catch(async () => (await caches.match(request)) || Response.error()));
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if(req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if(url.origin !== self.location.origin) return;
+  event.respondWith(caches.match(req).then(cached => cached || fetch(req).then(res => {
+    const isShell = SHELL.some(p => new URL(p, self.location.href).href === req.url);
+    if(isShell && res.ok) caches.open(CACHE).then(c => c.put(req, res.clone()));
+    return res;
+  })));
 });
